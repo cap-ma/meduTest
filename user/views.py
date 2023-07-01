@@ -9,10 +9,11 @@ from .serializers import (
     UserSerilizer,
     TeacherSerializer,
     GroupSerializer,
+    StudentProfileSerialzer,
 )
 
 from rest_framework import status
-from .models import Student, Teacher, User, Group
+from .models import Student, Teacher, User, Group, StudentProfile, TeacherProfile
 import datetime
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import generics
@@ -47,10 +48,14 @@ def authenticate(request):
 
 class StudentRegister(APIView):
     def post(self, request):
-        serializer = StudentRegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        user = authenticate(request)
+        if user:
+            serializer = StudentRegisterSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            serializer.data
+            serializer.save()
+            return Response(serializer.data)
 
 
 class StudentLoginView(APIView):
@@ -98,6 +103,28 @@ class StudentRUD(generics.RetrieveUpdateDestroyAPIView):
                 "you are trying to delete someone's profile",
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+
+class StudentProfileCL(generics.ListCreateAPIView):
+    queryset = StudentProfile.objects.all()
+    serializer_class = StudentProfileSerialzer
+
+    def get(self, request, *args, **kwargs):
+        print(self)
+        print(args)
+        print(kwargs)
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        print(args)
+        print(kwargs)
+        return self.create(request, *args, **kwargs)
+
+
+class StudentProfileCL(generics.RetrieveUpdateDestroyAPIView):
+    queryset = StudentProfile.objects.all()
+    serializer_class = StudentProfileSerialzer
+    lookup_field = "pk"
 
 
 class TeacherRegister(APIView):

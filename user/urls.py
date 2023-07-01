@@ -6,6 +6,7 @@ from .views import (
     TeachertRUD,
     GroupCL,
     GroupRUD,
+    StudentProfileCL,
 )
 
 urlpatterns = {
@@ -13,6 +14,12 @@ urlpatterns = {
     path("login/student", StudentLoginView.as_view()),
     path("student/get_by_id/<int:pk>", StudentRUD.as_view()),
     path("student/update_by_id", StudentRUD.as_view()),
+    path("student/delete_by_id", StudentRUD.as_view()),
+    path("studentProfile/create", StudentProfileCL.as_view()),
+    path("studentProfile/get", StudentProfileCL.as_view()),
+    path("student/delete_by_id", StudentRUD.as_view()),
+    path("student/delete_by_id", StudentRUD.as_view()),
+    path("student/delete_by_id", StudentRUD.as_view()),
     path("student/delete_by_id", StudentRUD.as_view()),
     path("teacher/get_by_id/<int:pk>", TeachertRUD.as_view()),
     path("teacher/update_by_id", TeachertRUD.as_view()),

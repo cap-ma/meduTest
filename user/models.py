@@ -37,6 +37,48 @@ class User(AbstractUser):
             return super().save(*args, **kwargs)
 
 
+class TeacherManager(BaseUserManager):
+    def get_queryset(self, *args, **kwargs):
+        results = super().get_queryset(*args, **kwargs)
+        return results.filter(role=User.Role.TEACHER)
+
+
+class Teacher(User):
+    base_role = User.Role.TEACHER
+
+    class Meta:
+        proxy = True
+
+    def welcome(self):
+        return "teacher"
+
+    student = TeacherManager()
+
+
+@receiver(post_save, sender=Teacher)
+def create_teacher_profile(sender, instance, created, **kwargs):
+    if created and instance.role == "TEACHER":
+        TeacherProfile.objects.create(user=instance)
+
+
+class TeacherProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
+    telegAccount = models.CharField(max_length=50)
+    firstname = models.CharField(max_length=50)
+    lastname = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+
+class Group(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+
 class StudentManager(BaseUserManager):
     def get_queryset(self, *args, **kwargs):
         results = super().get_queryset(*args, **kwargs)
@@ -62,37 +104,13 @@ def create_student_profile(sender, instance, created, **kwargs):
 
 
 class StudentProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-
-
-class TeacherManager(BaseUserManager):
-    def get_queryset(self, *args, **kwargs):
-        results = super().get_queryset(*args, **kwargs)
-        return results.filter(role=User.Role.TEACHER)
-
-
-class Teacher(User):
-    base_role = User.Role.TEACHER
-
-    class Meta:
-        proxy = True
-
-    def welcome(self):
-        return "teacher"
-
-    student = TeacherManager()
-
-
-@receiver(post_save, sender=Student)
-def create_teacher_profile(sender, instance, created, **kwargs):
-    if created and instance.role == "TEACHER":
-        TeacherProfile.objects.create(user=instance)
-
-
-class TeacherProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
-
-
-class Group(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=50)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
+    balance = models.FloatField()
+    telegAccount = models.CharField(max_length=30)
+    parentPhone = models.CharField(max_length=13)
+    parentTelegAccount = models.CharField(max_length=30)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
+    tuitionFee = models.FloatField()
+    group = models.ForeignKey(Group, on_delete=models.DO_NOTHING, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
