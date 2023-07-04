@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from .models import WithdrowalBalance
+from django.shortcuts import get_object_or_404
 
 from .serializers import (
     TeacherRegisterSerializer,
@@ -10,6 +12,10 @@ from .serializers import (
     TeacherSerializer,
     GroupSerializer,
     StudentProfileSerialzer,
+    AttendenceSerializer,
+    PaymentSerializer,
+    WithdrowalBalanceSerializer,
+    ExpenseSerializer,
 )
 
 from rest_framework import status
@@ -38,22 +44,56 @@ def authenticate(request):
         raise AuthenticationFailed("Unaauthenticated")
 
     user = User.objects.filter(id=payload["id"]).first()
+
     user_serialzed = UserSerilizer(user)
-    print(user_serialzed)
 
     if user:
         return user
     return False
 
 
-class StudentRegister(APIView):
+class UserLoginView(APIView):
+    def post(self, request):
+        phone_number = request.data["phone_number"]
+        password = request.data["password"]
+        user = User.objects.filter(phone_number=phone_number).first()
+
+        if user is None:
+            raise AuthenticationFailed("user not found")
+
+        if not user.check_password(password):
+            raise AuthenticationFailed("incorrect password")
+        payload = {
+            "id": user.id,
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=200),
+            "iat": datetime.datetime.utcnow(),
+        }
+
+        token = jwt.encode(payload, "secret", algorithm="HS256")
+        response = Response()
+
+        response.data = {"jwt": token, "role": user.role}
+
+        return response
+
+
+class UserRegisterView(APIView):
+    def post(self, request):
+        serializer = UserSerilizer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.save()
+        return Response(serializer.data)
+
+
+class StudentRegisterView(APIView):
     def post(self, request):
         user = authenticate(request)
+
         if user:
             serializer = StudentRegisterSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            serializer.data
             serializer.save()
             return Response(serializer.data)
 
@@ -83,19 +123,95 @@ class StudentLoginView(APIView):
         return response
 
 
-class StudentRUD(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Student.objects.all()
+class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = StudentProfile.objects.all()
 
-    serializer_class = StudentSerializer
+    serializer_class = StudentProfileSerialzer
     lookup_field = "pk"
+
+    def retrieve(self, request, *args, **kwargs):
+        user = authenticate(request)
+
+        if user:
+            if user.role == "TEACHER":
+                teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
+                student_of_teacher = StudentProfile.objects.filter(
+                    teacher__id=teacher_id
+                ).first()
+
+                if student_of_teacher is not None:
+                    instance = self.get_object()
+
+                    serializer = self.get_serializer(instance)
+                    return Response(serializer.data)
+
+            else:
+                id = StudentProfile.objects.get(user__id=int(user.id))
+
+                if int(id.id) == int(kwargs["pk"]) or ():
+                    instance = self.get_object()
+
+                    serializer = self.get_serializer(instance)
+                    return Response(serializer.data)
+
+            return Response(
+                "You are trying to access someone's profile ",
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+    def update(self, request, *args, **kwargs):
+        user = authenticate(request)
+        if user:
+            if user.role == "TAECHER":
+                teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
+                student_of_teacher = StudentProfile.objects.filter(
+                    teacher__id=teacher_id
+                ).first()
+
+                if student_of_teacher is not None:
+                    partial = kwargs.pop("partial", False)
+                    instance = self.get_object()
+                    serializer = self.get_serializer(
+                        instance, data=request.data, partial=partial
+                    )
+                    serializer.is_valid(raise_exception=True)
+                    self.perform_update(serializer)
+
+                    if getattr(instance, "_prefetched_objects_cache", None):
+                        # If 'prefetch_related' has been applied to a queryset, we need to
+                        # forcibly invalidate the prefetch cache on the instance.
+                        instance._prefetched_objects_cache = {}
+
+                    return Response(serializer.data)
+
+            else:
+                id = StudentProfile.objects.get(user__id=int(user.id))
+
+                if int(id.id) == int(kwargs["pk"]) or ():
+                    partial = kwargs.pop("partial", False)
+                    instance = self.get_object()
+                    serializer = self.get_serializer(
+                        instance, data=request.data, partial=partial
+                    )
+                    serializer.is_valid(raise_exception=True)
+                    self.perform_update(serializer)
+
+                    if getattr(instance, "_prefetched_objects_cache", None):
+                        # If 'prefetch_related' has been applied to a queryset, we need to
+                        # forcibly invalidate the prefetch cache on the instance.
+                        instance._prefetched_objects_cache = {}
+
+                    return Response(serializer.data)
 
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
-        if user:
-            print(args)
-            print(kwargs)
-            print(request)
-            if kwargs["pk"] == user.id:
+        if user.role == "TEACHER":
+            teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
+            student_of_teacher = StudentProfile.objects.get(teacher__id=teacher_id)
+            print(student_of_teacher)
+            print(teacher_id, "teacher_iddd")
+
+            if student_of_teacher is not None:
                 instance = self.get_object()
                 self.perform_destroy(instance)
                 return Response({"message": "Object deleted successfully."})
@@ -105,29 +221,52 @@ class StudentRUD(generics.RetrieveUpdateDestroyAPIView):
             )
 
 
-class StudentProfileCL(generics.ListCreateAPIView):
-    queryset = StudentProfile.objects.all()
-    serializer_class = StudentProfileSerialzer
-
-    def get(self, request, *args, **kwargs):
-        print(self)
-        print(args)
-        print(kwargs)
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        print(args)
-        print(kwargs)
-        return self.create(request, *args, **kwargs)
+class AssignStudentToTeacherView(APIView):
+    def put(self, request, id):
+        user = authenticate(request)
+        if user:
+            student_id = int(request.data["student_id"])
+            student = StudentProfile.objects.filter(id=student_id).first()
+            teacher_id = id
+            teacher_obj = TeacherProfile.objects.filter(id=teacher_id).first()
+            student.teacher = teacher_obj
+            student.save()
+            serialzer_student = StudentProfileSerialzer(student)
+            return Response(serialzer_student.data)
 
 
-class StudentProfileCL(generics.RetrieveUpdateDestroyAPIView):
-    queryset = StudentProfile.objects.all()
-    serializer_class = StudentProfileSerialzer
-    lookup_field = "pk"
+class AssignStudentToGroupView(APIView):
+    def put(self, request, id):
+        user = authenticate(request)
+        if user:
+            student_id = request.data["student_id"]
+            student = StudentProfile.objects.filter(id=student_id).first()
+
+            group_obj = Group.objects.filter(id=id).first()
+            student.group = group_obj
+            student.save()
+            serialzer_student = StudentProfileSerialzer(student)
+            return Response(serialzer_student.data)
 
 
-class TeacherRegister(APIView):
+class AttendenceView(APIView):
+    def post(self, request):
+        request = request.data["attendence"]
+
+        serializer = AttendenceSerializer(data=request, many=True)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        for x in request:
+            student = StudentProfile.objects.filter(id=int(x["student"])).first()
+            student.balance = float(student.balance) - float(student.tuitionFee)
+            student.save()
+            print(x["student"])
+
+        return Response(serializer.data)
+
+
+class TeacherRegisterView(APIView):
     def post(self, request):
         serializer = TeacherRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -160,30 +299,18 @@ class TeachertLoginView(APIView):
         return response
 
 
-class TeachertRUD(generics.RetrieveUpdateDestroyAPIView):
+class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Teacher.objects.all()
 
     serializer_class = TeacherSerializer
     lookup_field = "pk"
 
-    def delete(self, request, *args, **kwargs):
-        user = authenticate(request=request)
-        if user:
-            if kwargs["pk"] == user.id:
-                instance = self.get_object()
-                self.perform_destroy(instance)
-                return Response({"message": "Object deleted successfully."})
-            return Response(
-                "you are trying to delete someone's profile",
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-
-class GroupRUD(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Group.objects.all()
-
-    serializer_class = GroupSerializer
-    lookup_field = "pk"
+    def retrieve(self, request, *args, **kwargs):
+        user = authenticate(user)
+        if user.id == kwargs["ok"]:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
 
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
@@ -197,7 +324,66 @@ class GroupRUD(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+    def update(self, request, *args, **kwargs):
+        user = authenticate(request)
 
-class GroupCL(generics.ListCreateAPIView):
+        if user.id == kwargs["id"]:
+            partial = kwargs.pop("partial", False)
+            instance = self.get_object()
+            serializer = self.get_serializer(
+                instance, data=request.data, partial=partial
+            )
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            if getattr(instance, "_prefetched_objects_cache", None):
+                # If 'prefetch_related' has been applied to a queryset, we need to
+                # forcibly invalidate the prefetch cache on the instance.
+                instance._prefetched_objects_cache = {}
+
+            return Response(serializer.data)
+
+
+class GroupRUDView(APIView):
+    def get(self, requset):
+        pass
+
+    def post(self, request):
+        pass
+
+    def delete(self, request, *args, **kwargs):
+        user = authenticate(request=request)
+        if user:
+            if kwargs["pk"] == user.id:
+                instance = self.get_object()
+                self.perform_destroy(instance)
+                return Response({"message": "Object deleted successfully."})
+            return Response(
+                "you are trying to delete someone's profile",
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+
+class GroupCLView(generics.ListCreateAPIView):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
+
+
+class PaymentView(APIView):
+    def post(self, request):
+        print(request)
+        student = StudentProfile.objects.filter(id=int(request.data["student"])).first()
+        student.balance = float(student.balance) + float(request.data["sum"])
+        student.save()
+        serializer = PaymentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class ExpenseView(APIView):
+    def post(self, request):
+        serializer = ExpenseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
