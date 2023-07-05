@@ -222,7 +222,7 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class AssignStudentToTeacherView(APIView):
-    def put(self, request, id):
+    def put(self, request):
         user = authenticate(request)
         if user:
             student_id = int(request.data["student_id"])

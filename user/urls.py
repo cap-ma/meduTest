@@ -24,7 +24,7 @@ urlpatterns = [
     path("student/get_by_id/<int:pk>", StudentProfileRUDView.as_view()),
     path("student/update_by_id/<int:pk>", StudentProfileRUDView.as_view()),
     path("student/delete_by_id/<int:pk>", StudentProfileRUDView.as_view()),
-    path("student/assign_to_teacher/<int:id>", AssignStudentToTeacherView.as_view()),
+    path("student/assign_to_teacher", AssignStudentToTeacherView.as_view()),
     path("student/assign_to_group/<int:id>", AssignStudentToGroupView.as_view()),
     path("teacher/attendence", AttendenceView.as_view()),
     path("teacher/payment", PaymentView.as_view()),
