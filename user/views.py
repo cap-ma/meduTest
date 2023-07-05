@@ -356,9 +356,14 @@ class GroupRUDView(APIView):
 
     def post(self, request):
         user = authenticate(request=request)
-        if user.role == "Teacher":
-            data = int(request.data["id"])
-            groups = Group.objects.create(data)
+
+        if str(user.role) == "TEACHER":
+            name = request.data["name"]
+
+            teacher_id = request.data["teacher"]
+            techr_obj = TeacherProfile.objects.filter(id=teacher_id).first()
+            groups = Group.objects.create(name=name, teacher=techr_obj)
+
             serializer = GroupSerializer(groups)
             return Response(serializer.data)
 

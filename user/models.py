@@ -118,7 +118,6 @@ class TeacherProfile(models.Model):
 
 
 class Group(models.Model):
-    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
