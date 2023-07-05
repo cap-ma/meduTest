@@ -227,8 +227,10 @@ class AssignStudentToTeacherView(APIView):
         if user:
             student_id = int(request.data["student_id"])
             student = StudentProfile.objects.filter(id=student_id).first()
-            teacher_id = id
-            teacher_obj = TeacherProfile.objects.filter(id=teacher_id).first()
+            id = int(user.id)
+
+            teacher_id = TeacherProfile.objects.get(user__id=id)
+            teacher_obj = TeacherProfile.objects.filter(id=int(teacher_id)).first()
             student.teacher = teacher_obj
             student.save()
             serialzer_student = StudentProfileSerialzer(student)
