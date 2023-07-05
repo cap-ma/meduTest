@@ -3,7 +3,6 @@ from .views import (
     StudentRegisterView,
     StudentLoginView,
     TeachertRUDView,
-    GroupCLView,
     GroupRUDView,
     UserLoginView,
     TeacherRegisterView,
@@ -36,8 +35,5 @@ urlpatterns = [
     path("teacher/update_by_id", TeachertRUDView.as_view()),
     path("teacher/delete_by_id", TeachertRUDView.as_view()),
     path("group/get_by_id/<int:pk>", GroupRUDView.as_view()),
-    path("group/update_by_id", GroupRUDView.as_view()),
-    path("group/delete_by_id", GroupRUDView.as_view()),
-    path("group/create", GroupCLView.as_view()),
-    path("group/list", GroupCLView.as_view()),
+    path("group/create", GroupRUDView.as_view()),
 ]

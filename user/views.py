@@ -349,7 +349,8 @@ class GroupRUDView(APIView):
         user = authenticate(request=request)
         if user.role == "Teacher":
             id = int(request.data["id"])
-            groups = Group.objects.filter(id=id, teacher__id=id).first()
+            teacher_id = TeacherProfile.objects.get(user__id=int(user.id))
+            groups = Group.objects.filter(id=id, teacher__id=teacher_id).first()
             serializer = GroupSerializer(groups)
             return Response(serializer.data)
 
@@ -360,11 +361,6 @@ class GroupRUDView(APIView):
             groups = Group.objects.create(data)
             serializer = GroupSerializer(groups)
             return Response(serializer.data)
-
-
-class GroupCLView(generics.ListCreateAPIView):
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
 
 
 class PaymentView(APIView):
