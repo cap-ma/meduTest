@@ -345,23 +345,21 @@ class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class GroupRUDView(APIView):
-    def get(self, requset):
-        pass
+    def get(self, request):
+        user = authenticate(request=request)
+        if user.role == "Teacher":
+            id = int(request.data["id"])
+            groups = Group.objects.filter(id=id, teacher__id=id).first()
+            serializer = GroupSerializer(groups)
+            return Response(serializer.data)
 
     def post(self, request):
-        pass
-
-    def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
-        if user:
-            if kwargs["pk"] == user.id:
-                instance = self.get_object()
-                self.perform_destroy(instance)
-                return Response({"message": "Object deleted successfully."})
-            return Response(
-                "you are trying to delete someone's profile",
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if user.role == "Teacher":
+            data = int(request.data["id"])
+            groups = Group.objects.create(data)
+            serializer = GroupSerializer(groups)
+            return Response(serializer.data)
 
 
 class GroupCLView(generics.ListCreateAPIView):
