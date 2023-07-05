@@ -345,10 +345,9 @@ class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class GroupRUDView(APIView):
-    def get(self, request):
+    def get(self, request, id):
         user = authenticate(request=request)
         if user.role == "Teacher":
-            id = int(request.data["id"])
             teacher_id = TeacherProfile.objects.get(user__id=int(user.id))
             groups = Group.objects.filter(id=id, teacher__id=teacher_id).first()
             serializer = GroupSerializer(groups)
