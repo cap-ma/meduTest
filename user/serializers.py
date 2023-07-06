@@ -33,11 +33,11 @@ class UserSerilizer(serializers.ModelSerializer):
 
 
 class TeacherRegisterSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    # id = serializers.IntegerField()
 
     class Meta:
         model = Teacher
-        fields = ["phone_number", "password"]
+        fields = ["id", "phone_number", "password"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
@@ -52,11 +52,9 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
 
 
 class StudentRegisterSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-
     class Meta:
         model = Student
-        fields = ["phone_number", "password"]
+        fields = ["id", "phone_number", "password"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):

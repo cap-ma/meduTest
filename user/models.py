@@ -106,7 +106,7 @@ def create_teacher_profile(sender, instance, created, **kwargs):
 
 
 class TeacherProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     telegAccount = models.CharField(max_length=50)
     firstname = models.CharField(max_length=50)
     lastname = models.CharField(max_length=50)
@@ -157,7 +157,7 @@ def create_student_profile(sender, instance, created, **kwargs):
 
 
 class StudentProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     balance = models.FloatField(null=True)
     telegAccount = models.CharField(max_length=30)
     parentPhone = models.CharField(max_length=13)
