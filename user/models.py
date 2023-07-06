@@ -47,6 +47,13 @@ class CustomUserManager(BaseUserManager):
             email, phone_number=phone_number, password=password, **extra_fields
         )
 
+    def delete(self, using=None, keep_parents=False):
+        # Custom logic before deleting the user
+        # For example, you can perform additional actions or checks
+
+        # Delete the user
+        super().delete(using=using, keep_parents=keep_parents)
+
 
 class User(AbstractUser):
     username = None
@@ -114,7 +121,7 @@ class TeacherProfile(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.user)
+        return str(self.firstname)
 
 
 class Group(models.Model):

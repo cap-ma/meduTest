@@ -32,8 +32,6 @@ urlpatterns = [
     path("register/teacher", TeacherRegisterView.as_view()),
     path("login/teacher", TeachertLoginView.as_view()),
     path("teacher/get_by_id/<int:pk>", TeachertRUDView.as_view()),
-    path("teacher/update_by_id", TeachertRUDView.as_view()),
-    path("teacher/delete_by_id", TeachertRUDView.as_view()),
-    path("group/get_by_id/<int:id>", GroupRUDView.as_view()),
+    path("teacher/update_by_id/<int:pk>", TeachertRUDView.as_view()),
     path("group/create", GroupRUDView.as_view()),
 ]

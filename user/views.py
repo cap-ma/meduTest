@@ -16,6 +16,7 @@ from .serializers import (
     PaymentSerializer,
     WithdrowalBalanceSerializer,
     ExpenseSerializer,
+    TeacherProfileSerializer,
 )
 
 from rest_framework import status
@@ -138,6 +139,7 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                 student_of_teacher = StudentProfile.objects.filter(
                     teacher__id=teacher_id
                 ).first()
+                print("heeeereee")
 
                 if student_of_teacher is not None:
                     instance = self.get_object()
@@ -148,7 +150,7 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
             else:
                 id = StudentProfile.objects.get(user__id=int(user.id))
 
-                if int(id.id) == int(kwargs["pk"]) or ():
+                if int(id.id) == int(kwargs["pk"]):
                     instance = self.get_object()
 
                     serializer = self.get_serializer(instance)
@@ -162,8 +164,10 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         user = authenticate(request)
         if user:
-            if user.role == "TAECHER":
+            print(user.role)
+            if user.role == "TEACHER":
                 teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
+                print(teacher_id, "taecher_idddd")
                 student_of_teacher = StudentProfile.objects.filter(
                     teacher__id=teacher_id
                 ).first()
@@ -184,36 +188,27 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
 
                     return Response(serializer.data)
 
-            else:
-                id = StudentProfile.objects.get(user__id=int(user.id))
-
-                if int(id.id) == int(kwargs["pk"]) or ():
-                    partial = kwargs.pop("partial", False)
-                    instance = self.get_object()
-                    serializer = self.get_serializer(
-                        instance, data=request.data, partial=partial
-                    )
-                    serializer.is_valid(raise_exception=True)
-                    self.perform_update(serializer)
-
-                    if getattr(instance, "_prefetched_objects_cache", None):
-                        # If 'prefetch_related' has been applied to a queryset, we need to
-                        # forcibly invalidate the prefetch cache on the instance.
-                        instance._prefetched_objects_cache = {}
-
-                    return Response(serializer.data)
-
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
         if user.role == "TEACHER":
+            student_id = int(kwargs["pk"])
             teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
-            student_of_teacher = StudentProfile.objects.get(teacher__id=teacher_id)
+            print(teacher_id, "teacherrrrr")
+            student_of_teacher = StudentProfile.objects.filter(
+                id=student_id, teacher__id=teacher_id
+            ).first()
+            print(student_of_teacher, "stuuuuudeeeent")
             print(student_of_teacher)
             print(teacher_id, "teacher_iddd")
+
+            student = StudentProfile.objects.filter(id=student_id).first()
+            print(student.user)
 
             if student_of_teacher is not None:
                 instance = self.get_object()
                 self.perform_destroy(instance)
+                student_to_be_deleted = Student.objects.get(id=int(student.user.id))
+                student_to_be_deleted.delete()
                 return Response({"message": "Object deleted successfully."})
             return Response(
                 "you are trying to delete someone's profile",
@@ -302,48 +297,50 @@ class TeachertLoginView(APIView):
 
 
 class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Teacher.objects.all()
+    queryset = TeacherProfile.objects.all()
 
-    serializer_class = TeacherSerializer
+    serializer_class = TeacherProfileSerializer
     lookup_field = "pk"
 
     def retrieve(self, request, *args, **kwargs):
-        user = authenticate(user)
-        if user.id == kwargs["ok"]:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-
-    def delete(self, request, *args, **kwargs):
-        user = authenticate(request=request)
-        if user:
-            if kwargs["pk"] == user.id:
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            if user.id == kwargs["pk"]:
                 instance = self.get_object()
-                self.perform_destroy(instance)
-                return Response({"message": "Object deleted successfully."})
+                serializer = self.get_serializer(instance)
+                return Response(serializer.data)
             return Response(
-                "you are trying to delete someone's profile",
+                "you are trying to get non personal profile",
                 status=status.HTTP_403_FORBIDDEN,
             )
+        return Response("you are not teacher", status=status.HTTP_403_FORBIDDEN)
+
+    
 
     def update(self, request, *args, **kwargs):
         user = authenticate(request)
 
-        if user.id == kwargs["id"]:
-            partial = kwargs.pop("partial", False)
-            instance = self.get_object()
-            serializer = self.get_serializer(
-                instance, data=request.data, partial=partial
+        if user.role == "TEACHER":
+            if user.id == kwargs["pk"]:
+                partial = kwargs.pop("partial", False)
+                instance = self.get_object()
+                serializer = self.get_serializer(
+                    instance, data=request.data, partial=partial
+                )
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+
+                if getattr(instance, "_prefetched_objects_cache", None):
+                    # If 'prefetch_related' has been applied to a queryset, we need to
+                    # forcibly invalidate the prefetch cache on the instance.
+                    instance._prefetched_objects_cache = {}
+
+                return Response(serializer.data)
+            return Response(
+                "you are trying to update someone's profile",
+                status=status.HTTP_403_FORBIDDEN,
             )
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-
-            if getattr(instance, "_prefetched_objects_cache", None):
-                # If 'prefetch_related' has been applied to a queryset, we need to
-                # forcibly invalidate the prefetch cache on the instance.
-                instance._prefetched_objects_cache = {}
-
-            return Response(serializer.data)
+        return Response("you are not teacher", status=status.HTTP_403_FORBIDDEN)
 
 
 class GroupRUDView(APIView):
