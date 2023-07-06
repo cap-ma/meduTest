@@ -14,7 +14,7 @@ from .models import (
 
 
 class UserSerilizer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
@@ -70,7 +70,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
 
 
 class StudentSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Student
@@ -79,7 +79,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class StudentProfileSerialzer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = StudentProfile
@@ -87,7 +87,7 @@ class StudentProfileSerialzer(serializers.ModelSerializer):
 
 
 class TeacherSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Teacher
@@ -96,7 +96,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 class TeacherProfileSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = TeacherProfile
@@ -104,7 +104,7 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Group
@@ -112,7 +112,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class AttendenceSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Attendance
@@ -120,7 +120,7 @@ class AttendenceSerializer(serializers.ModelSerializer):
 
 
 class PaymentSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Payment
@@ -128,7 +128,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 
 class WithdrowalBalanceSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = WithdrowalBalance
@@ -136,7 +136,7 @@ class WithdrowalBalanceSerializer(serializers.ModelSerializer):
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Expense
