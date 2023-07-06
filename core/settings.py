@@ -140,6 +140,6 @@ CORS_ALLOW_HEADERS = (
 )
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "*",
     # Add other allowed origins if needed
 ]
