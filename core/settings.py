@@ -131,7 +131,9 @@ DATE_INPUT_FORMATS = ["%Y-%m-%d"]
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
-
+CSRF_TRUSTED_ORIGINS = [
+    "http://capma.pythonanywhere.com/",
+]
 from corsheaders.defaults import default_headers
 
 CORS_ALLOW_HEADERS = (
