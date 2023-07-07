@@ -141,7 +141,7 @@ CORS_ALLOW_HEADERS = (
     "jwt",
 )
 
-CORS_ALLOWED_ORIGINS = [
-    "*",
-    # Add other allowed origins if needed
-]
+CORS_ALLOWED_ORIGINS = ["https://capma.pythonanywhere.com", "http://127.0.0.1:8000"]
+
+
+CORS_ALLOW_ALL_ORIGINS = True

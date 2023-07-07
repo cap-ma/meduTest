@@ -157,20 +157,17 @@ class Student(User):
 @receiver(post_save, sender=Student)
 def create_student_profile(sender, instance, created, **kwargs):
     if created and instance.role == "STUDENT":
-        print(instance, "it is instanceeee")
-        print(kwargs)
-        print(created, "sender")
         StudentProfile.objects.create(user=instance)
 
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    balance = models.FloatField(null=True)
+    balance = models.FloatField(default=0)
     telegAccount = models.CharField(max_length=30)
     parentPhone = models.CharField(max_length=13)
     parentTelegAccount = models.CharField(max_length=30)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
-    tuitionFee = models.FloatField(null=True)
+    tuitionFee = models.FloatField(default=0)
     group = models.ForeignKey(Group, on_delete=models.DO_NOTHING, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)

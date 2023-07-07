@@ -96,7 +96,18 @@ class StudentRegisterView(APIView):
             serializer.is_valid(raise_exception=True)
 
             serializer.save()
-            return Response(serializer.data)
+
+            student_profile = StudentProfile.objects.get(user=serializer.data["id"])
+            teacher_profile = TeacherProfile.objects.get(user=user.id)
+            student_profile.teacher = teacher_profile
+            print(student_profile, "thi isiiii")
+
+            student_profile.save()
+
+            mydata = serializer.data
+            mydata["id"] = student_profile.id
+
+            return Response(mydata)
 
 
 class StudentLoginView(APIView):
@@ -122,6 +133,25 @@ class StudentLoginView(APIView):
         response.data = {"jwt": token, "role": student.role}
 
         return response
+
+
+class StudentProfileList(generics.ListAPIView):
+    queryset = StudentProfile.objects.all()
+    serializer_class = StudentProfileSerialzer
+
+    def list(self, request, *args, **kwargs):
+        user = authenticate(request)
+        if user:
+            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(teacher__id=user.id)
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
 
 
 class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
@@ -266,9 +296,15 @@ class AttendenceView(APIView):
 class TeacherRegisterView(APIView):
     def post(self, request):
         serializer = TeacherRegisterSerializer(data=request.data)
+
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+
+        teacher_profile = TeacherProfile.objects.get(user=serializer.data["id"])
+        mydata = serializer.data
+        mydata["id"] = teacher_profile.id
+
+        return Response(mydata)
 
 
 class TeachertLoginView(APIView):
@@ -314,8 +350,6 @@ class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
         return Response("you are not teacher", status=status.HTTP_403_FORBIDDEN)
-
-    
 
     def update(self, request, *args, **kwargs):
         user = authenticate(request)
