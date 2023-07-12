@@ -154,6 +154,18 @@ class StudentProfileList(generics.ListAPIView):
             return Response(serializer.data)
 
 
+class StudentGetMe(APIView):
+    def get(self, request):
+        user = authenticate(request)
+
+        if user.role == "STUDENT":
+            print(user.id)
+            student_profile = StudentProfile.objects.get(user__id=user.id)
+            serialized_student = StudentProfileSerialzer(student_profile)
+
+        return Response(serialized_student.data)
+
+
 class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = StudentProfile.objects.all()
 

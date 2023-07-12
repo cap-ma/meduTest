@@ -15,6 +15,7 @@ from .views import (
     ExpenseView,
     UserRegisterView,
     StudentProfileList,
+    StudentGetMe,
 )
 
 urlpatterns = [
@@ -23,6 +24,7 @@ urlpatterns = [
     path("register/student", StudentRegisterView.as_view()),
     path("login/student", StudentLoginView.as_view()),
     path("student/list", StudentProfileList.as_view()),
+    path("student/get_me", StudentGetMe.as_view()),
     path("student/get_by_id/<int:pk>", StudentProfileRUDView.as_view()),
     path("student/update_by_id/<int:pk>", StudentProfileRUDView.as_view()),
     path("student/delete_by_id/<int:pk>", StudentProfileRUDView.as_view()),
