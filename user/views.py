@@ -82,7 +82,7 @@ class UserRegisterView(APIView):
         serializer.is_valid(raise_exception=True)
 
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, 201)
 
 
 class StudentRegisterView(APIView):
@@ -111,7 +111,7 @@ class StudentRegisterView(APIView):
             mydata = serializer.data
             mydata["id"] = student_profile.id
 
-            return Response(mydata)
+            return Response(mydata, 201)
 
 
 class StudentLoginView(APIView):
@@ -134,6 +134,7 @@ class StudentLoginView(APIView):
 
         token = jwt.encode(payload, "secret", algorithm="HS256")
         response = Response()
+        response.status_code = 200
 
         response.data = {"jwt": token, "role": student.role}
 
@@ -156,7 +157,7 @@ class StudentProfileList(generics.ListAPIView):
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            return Response(serializer.data, 200)
 
 
 class StudentGetMe(APIView):
@@ -168,7 +169,7 @@ class StudentGetMe(APIView):
             student_profile = StudentProfile.objects.get(user__id=user.id)
             serialized_student = StudentProfileSerialzer(student_profile)
 
-        return Response(serialized_student.data)
+        return Response(serialized_student.data, 200)
 
 
 class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
@@ -232,7 +233,7 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                         # forcibly invalidate the prefetch cache on the instance.
                         instance._prefetched_objects_cache = {}
 
-                    return Response(serializer.data)
+                    return Response(serializer.data, 200)
 
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
@@ -243,9 +244,6 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
             student_of_teacher = StudentProfile.objects.filter(
                 id=student_id, teacher__id=teacher_id
             ).first()
-            print(student_of_teacher, "stuuuuudeeeent")
-            print(student_of_teacher)
-            print(teacher_id, "teacher_iddd")
 
             student = StudentProfile.objects.filter(id=student_id).first()
             print(student.user)
@@ -255,7 +253,7 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                 self.perform_destroy(instance)
                 student_to_be_deleted = User.objects.get(id=int(student.user.id))
                 student_to_be_deleted.delete()
-                return Response({"message": "Object deleted successfully."})
+                return Response({"message": "Object deleted successfully."}, 201)
             return Response(
                 "you are trying to delete someone's profile",
                 status=status.HTTP_403_FORBIDDEN,
@@ -275,7 +273,7 @@ class AssignStudentToTeacherView(APIView):
             student.teacher = teacher_obj
             student.save()
             serialzer_student = StudentProfileSerialzer(student)
-            return Response(serialzer_student.data)
+            return Response(serialzer_student.data, 200)
 
 
 class AssignStudentToGroupView(APIView):
@@ -289,7 +287,7 @@ class AssignStudentToGroupView(APIView):
             student.group = group_obj
             student.save()
             serialzer_student = StudentProfileSerialzer(student)
-            return Response(serialzer_student.data)
+            return Response(serialzer_student.data, 200)
 
 
 class AttendenceView(APIView):
@@ -306,7 +304,7 @@ class AttendenceView(APIView):
             student.save()
             print(x["student"])
 
-        return Response(serializer.data)
+        return Response(serializer.data, 201)
 
 
 class TeacherRegisterView(APIView):
@@ -340,7 +338,7 @@ class TeachertLoginView(APIView):
         response = Response()
 
         response.data = {"jwt": token, "role": teacher.role}
-
+        response.status_code = 200
         return response
 
 
@@ -396,7 +394,7 @@ class GroupRUDView(APIView):
             teacher_id = TeacherProfile.objects.get(user__id=int(user.id))
             groups = Group.objects.filter(id=id, teacher__id=teacher_id).first()
             serializer = GroupSerializer(groups)
-            return Response(serializer.data)
+            return Response(serializer.data, 200)
 
     def post(self, request):
         user = authenticate(request=request)
@@ -409,19 +407,18 @@ class GroupRUDView(APIView):
             groups = Group.objects.create(name=name, teacher=techr_obj)
 
             serializer = GroupSerializer(groups)
-            return Response(serializer.data)
+            return Response(serializer.data, 201)
 
 
 class PaymentView(APIView):
     def post(self, request):
-        print(request)
         student = StudentProfile.objects.filter(id=int(request.data["student"])).first()
         student.balance = float(student.balance) + float(request.data["sum"])
         student.save()
         serializer = PaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, 201)
 
 
 class ExpenseView(APIView):
@@ -429,4 +426,4 @@ class ExpenseView(APIView):
         serializer = ExpenseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, 201)
