@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 
-from ..user.models import StudentProfile, TeacherProfile
+from user.models import StudentProfile, TeacherProfile
 
 
 class TestCategory(models.Model):
@@ -19,7 +19,7 @@ class Test(models.Model):
     answer = models.CharField(max_length=200)
     level = models.IntegerField()
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
-    category = models.ForeignKey(TestCategory, on_delete=models.DO_NOTHING)
+    category = models.ForeignKey(TestCategory, on_delete=models.DO_NOTHING, null=True)
 
 
 class OrderTestInfo(models.Model):
@@ -36,7 +36,7 @@ class OrderTestPack(models.Model):
 
 
 class OrderTestPackStudent(models.Model):
-    result = models.CharField()
+    result = models.CharField(max_length=200)
     is_correct = models.BooleanField()
     order_test_pack = models.ForeignKey(OrderTestPack, on_delete=models.CASCADE)
 

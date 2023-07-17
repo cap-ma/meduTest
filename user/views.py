@@ -96,14 +96,15 @@ class StudentRegisterView(APIView):
             serializer.save()
 
             serializer_id = serializer.data["id"]
-            print(serializer_id)
 
             student_ = get_object_or_404(User, id=int(serializer_id))
             student_profile = StudentProfile.objects.get(
                 id=int(student_.student_profile.id)
             )
 
-            teacher_profile = TeacherProfile.objects.get(id=int(user.id))
+            teacher_profile = TeacherProfile.objects.get(
+                id=int(user.teacher_profile.id)
+            )
             student_profile.teacher = teacher_profile
 
             student_profile.save()
@@ -149,7 +150,7 @@ class StudentProfileList(generics.ListAPIView):
         user = authenticate(request)
         if user:
             queryset = self.filter_queryset(self.get_queryset())
-            queryset = queryset.filter(teacher__id=user.id)
+            queryset = queryset.filter(teacher__id=int(user.teacher_profile.id))
 
             page = self.paginate_queryset(queryset)
             if page is not None:
