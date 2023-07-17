@@ -7,9 +7,7 @@ from django.shortcuts import get_object_or_404
 from .serializers import (
     TeacherRegisterSerializer,
     StudentRegisterSerializer,
-    StudentSerializer,
     UserSerilizer,
-    TeacherSerializer,
     GroupSerializer,
     StudentProfileSerialzer,
     AttendenceSerializer,
@@ -20,7 +18,7 @@ from .serializers import (
 )
 
 from rest_framework import status
-from .models import Student, Teacher, User, Group, StudentProfile, TeacherProfile
+from .models import User, Group, StudentProfile, TeacherProfile
 import datetime
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import generics
@@ -42,7 +40,7 @@ def authenticate(request):
     try:
         payload = jwt.decode(token, "secret", algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
-        raise AuthenticationFailed("Unaauthenticated")
+        raise AuthenticationFailed("Unauthenticated")
 
     user = User.objects.filter(id=payload["id"]).first()
 
@@ -97,10 +95,17 @@ class StudentRegisterView(APIView):
 
             serializer.save()
 
-            student_profile = StudentProfile.objects.get(user=serializer.data["id"])
-            teacher_profile = TeacherProfile.objects.get(user=user.id)
+            serializer_id = serializer.data["id"]
+            print(serializer_id)
+
+            user = get_object_or_404(User, id=int(serializer_id))
+            student_profile = StudentProfile.objects.get(
+                id=int(user.student_profile.id)
+            )
+            print(user)
+            print(user.teacher_profile, "teacher  ")
+            teacher_profile = TeacherProfile.objects.get(id=int(user.teacher_profile))
             student_profile.teacher = teacher_profile
-            print(student_profile, "thi isiiii")
 
             student_profile.save()
 
@@ -114,13 +119,14 @@ class StudentLoginView(APIView):
     def post(self, request):
         phone_number = request.data["phone_number"]
         password = request.data["password"]
-        student = Student.objects.filter(phone_number=phone_number).first()
+        student = User.objects.filter(phone_number=phone_number).first()
 
         if student is None:
             raise AuthenticationFailed("user not found")
 
         if not student.check_password(password):
             raise AuthenticationFailed("incorrect password")
+
         payload = {
             "id": student.id,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=200),
@@ -181,7 +187,6 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                 student_of_teacher = StudentProfile.objects.filter(
                     teacher__id=teacher_id
                 ).first()
-                print("heeeereee")
 
                 if student_of_teacher is not None:
                     instance = self.get_object()
@@ -249,7 +254,7 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
             if student_of_teacher is not None:
                 instance = self.get_object()
                 self.perform_destroy(instance)
-                student_to_be_deleted = Student.objects.get(id=int(student.user.id))
+                student_to_be_deleted = User.objects.get(id=int(student.user.id))
                 student_to_be_deleted.delete()
                 return Response({"message": "Object deleted successfully."})
             return Response(
@@ -312,18 +317,14 @@ class TeacherRegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        teacher_profile = TeacherProfile.objects.get(user=serializer.data["id"])
-        mydata = serializer.data
-        mydata["id"] = teacher_profile.id
-
-        return Response(mydata)
+        return Response(serializer.data, 201)
 
 
 class TeachertLoginView(APIView):
     def post(self, request):
         phone_number = request.data["phone_number"]
         password = request.data["password"]
-        teacher = Teacher.objects.filter(phone_number=phone_number).first()
+        teacher = User.objects.filter(phone_number=phone_number).first()
 
         if teacher is None:
             raise AuthenticationFailed("user not found")
