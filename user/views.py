@@ -98,13 +98,12 @@ class StudentRegisterView(APIView):
             serializer_id = serializer.data["id"]
             print(serializer_id)
 
-            user = get_object_or_404(User, id=int(serializer_id))
+            student_ = get_object_or_404(User, id=int(serializer_id))
             student_profile = StudentProfile.objects.get(
-                id=int(user.student_profile.id)
+                id=int(student_.student_profile.id)
             )
-            print(user)
-            print(user.teacher_profile, "teacher  ")
-            teacher_profile = TeacherProfile.objects.get(id=int(user.teacher_profile))
+
+            teacher_profile = TeacherProfile.objects.get(id=int(user.id))
             student_profile.teacher = teacher_profile
 
             student_profile.save()
