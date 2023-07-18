@@ -62,7 +62,7 @@ class TeacherProfile(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.firstname)
+        return str(self.teleg_account)
 
 
 class Group(models.Model):

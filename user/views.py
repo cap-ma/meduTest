@@ -101,7 +101,7 @@ class StudentRegisterView(APIView):
             student_profile = StudentProfile.objects.get(
                 id=int(student_.student_profile.id)
             )
-
+            print(user.teacher_profile.id)
             teacher_profile = TeacherProfile.objects.get(
                 id=int(user.teacher_profile.id)
             )
@@ -352,7 +352,7 @@ class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         user = authenticate(request)
         if user.role == "TEACHER":
-            if user.id == kwargs["pk"]:
+            if int(user.teacher_profile.id) == kwargs["pk"]:
                 instance = self.get_object()
                 serializer = self.get_serializer(instance)
                 return Response(serializer.data)
