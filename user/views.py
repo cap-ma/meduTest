@@ -184,21 +184,18 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
 
         if user:
             if user.role == "TEACHER":
-                teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
-                student_of_teacher = StudentProfile.objects.filter(
-                    teacher__id=teacher_id
-                ).first()
+                student = StudentProfile.objects.get(id=int(kwargs["pk"]))
 
-                if student_of_teacher is not None:
+                if student.teacher.id == user.teacher_profile.id:
                     instance = self.get_object()
 
                     serializer = self.get_serializer(instance)
                     return Response(serializer.data)
 
             else:
-                id = StudentProfile.objects.get(user__id=int(user.id))
+                student_profile = StudentProfile.objects.get(user__id=int(user.id))
 
-                if int(id.id) == int(kwargs["pk"]):
+                if int(student_profile.id) == int(kwargs["pk"]):
                     instance = self.get_object()
 
                     serializer = self.get_serializer(instance)
@@ -214,13 +211,9 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
         if user:
             print(user.role)
             if user.role == "TEACHER":
-                teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
-                print(teacher_id, "taecher_idddd")
-                student_of_teacher = StudentProfile.objects.filter(
-                    teacher__id=teacher_id
-                ).first()
+                student = StudentProfile.objects.get(id=int(kwargs["pk"]))
 
-                if student_of_teacher is not None:
+                if student.teacher.id == user.teacher_profile.id:
                     partial = kwargs.pop("partial", False)
                     instance = self.get_object()
                     serializer = self.get_serializer(
@@ -239,17 +232,9 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
         if user.role == "TEACHER":
-            student_id = int(kwargs["pk"])
-            teacher_id = int(TeacherProfile.objects.get(user__id=user.id).id)
-            print(teacher_id, "teacherrrrr")
-            student_of_teacher = StudentProfile.objects.filter(
-                id=student_id, teacher__id=teacher_id
-            ).first()
+            student = StudentProfile.objects.get(id=int(kwargs["pk"]))
 
-            student = StudentProfile.objects.filter(id=student_id).first()
-            print(student.user)
-
-            if student_of_teacher is not None:
+            if student.teacher.id == user.teacher_profile.id:
                 instance = self.get_object()
                 self.perform_destroy(instance)
                 student_to_be_deleted = User.objects.get(id=int(student.user.id))
