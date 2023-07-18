@@ -31,9 +31,12 @@ class UserSerilizer(serializers.ModelSerializer):
 
 
 class TeacherProfileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = TeacherProfile
         fields = [
+            "id",
             "teleg_account",
         ]
 
@@ -43,7 +46,14 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "phone_number", "password", "teacher_profile"]
+        fields = [
+            "id",
+            "phone_number",
+            "password",
+            "first_name",
+            "last_name",
+            "teacher_profile",
+        ]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
@@ -84,7 +94,14 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "phone_number", "password", "student_profile"]
+        fields = [
+            "id",
+            "phone_number",
+            "password",
+            "first_name",
+            "last_name",
+            "student_profile",
+        ]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):

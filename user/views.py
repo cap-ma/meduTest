@@ -235,10 +235,11 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
             student = StudentProfile.objects.get(id=int(kwargs["pk"]))
 
             if student.teacher.id == user.teacher_profile.id:
-                instance = self.get_object()
-                self.perform_destroy(instance)
                 student_to_be_deleted = User.objects.get(id=int(student.user.id))
                 student_to_be_deleted.delete()
+                instance = self.get_object()
+                self.perform_destroy(instance)
+
                 return Response({"message": "Object deleted successfully."}, 201)
             return Response(
                 "you are trying to delete someone's profile",
@@ -326,6 +327,20 @@ class TeachertLoginView(APIView):
         response.data = {"jwt": token, "role": teacher.role}
         response.status_code = 200
         return response
+
+
+class TeacherGetMeView(APIView):
+    def get(self, request):
+        user = authenticate(request)
+
+        if user.role == "TEACHER":
+            print(user.id)
+            teacher_profile = TeacherProfile.objects.get(id=user.teacher_profile.id)
+            serialized_teacher = TeacherProfileSerializer(teacher_profile)
+            my_data = serialized_teacher.data
+            my_data["first_name"] = user.first_name
+            my_data["last_name"] = user.last_name
+            return Response(my_data, 200)
 
 
 class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):

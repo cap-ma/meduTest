@@ -6,6 +6,7 @@ from .views import (
     GroupRUDView,
     UserLoginView,
     TeacherRegisterView,
+    TeacherGetMeView,
     TeachertLoginView,
     AssignStudentToTeacherView,
     AssignStudentToGroupView,
@@ -36,6 +37,7 @@ urlpatterns = [
     path("register/teacher", TeacherRegisterView.as_view()),
     path("login/teacher", TeachertLoginView.as_view()),
     path("teacher/get_by_id/<int:pk>", TeachertRUDView.as_view()),
+    path("teacher/get_me", TeacherGetMeView.as_view()),
     path("teacher/update_by_id/<int:pk>", TeachertRUDView.as_view()),
     path("group/create", GroupRUDView.as_view()),
 ]
