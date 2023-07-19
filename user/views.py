@@ -158,7 +158,16 @@ class StudentProfileList(generics.ListAPIView):
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data, 200)
+            my_dict = serializer.data
+            count = 0
+            for x in serializer.data:
+                student = User.objects.get(student_profile=int(x["id"]))
+                my_dict[count]["phone_number"] = student.phone_number
+                my_dict[count]["first_name"] = student.first_name
+                my_dict[count]["last_name"] = student.last_name
+                count = count + 1
+
+            return Response(my_dict, 200)
 
 
 class StudentGetMe(APIView):
