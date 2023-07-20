@@ -17,6 +17,7 @@ from .views import (
     UserRegisterView,
     StudentProfileList,
     StudentGetMe,
+    UpdateStudentProfileView,
 )
 
 urlpatterns = [
@@ -27,7 +28,7 @@ urlpatterns = [
     path("student/list", StudentProfileList.as_view()),
     path("student/get_me", StudentGetMe.as_view()),
     path("student/get_by_id/<int:pk>", StudentProfileRUDView.as_view()),
-    path("student/update_by_id/<int:pk>", StudentProfileRUDView.as_view()),
+    path("student/update_by_id/<int:id>", UpdateStudentProfileView.as_view()),
     path("student/delete_by_id/<int:pk>", StudentProfileRUDView.as_view()),
     path("student/assign_to_teacher", AssignStudentToTeacherView.as_view()),
     path("student/assign_to_group/<int:id>", AssignStudentToGroupView.as_view()),

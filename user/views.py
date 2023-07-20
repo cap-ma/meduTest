@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import serializers
 from .models import WithdrowalBalance
 from django.shortcuts import get_object_or_404
 
@@ -217,26 +218,38 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         user = authenticate(request)
-        if user:
-            print(user.role)
-            if user.role == "TEACHER":
-                student = StudentProfile.objects.get(id=int(kwargs["pk"]))
 
-                if student.teacher.id == user.teacher_profile.id:
-                    partial = kwargs.pop("partial", False)
-                    instance = self.get_object()
-                    serializer = self.get_serializer(
-                        instance, data=request.data, partial=partial
+        if user.role == "TEACHER":
+            student = StudentProfile.objects.get(id=int(kwargs["pk"]))
+
+            if student.teacher.id == user.teacher_profile.id:
+                my_user = User.objects.get(student_profile=student.id)
+                if (
+                    User.objects.exclude(pk=user.id)
+                    .filter(phone_number=kwargs["phone_number"])
+                    .exists()
+                ):
+                    raise serializers.ValidationError(
+                        {"email": "This email is already in use."}
                     )
-                    serializer.is_valid(raise_exception=True)
-                    self.perform_update(serializer)
+                my_user.phone_number = kwargs["phone_number"]
+                my_user.last_name = kwargs["last_name"]
+                my_user.first_name = kwargs["first_name"]
+                my_user.save()
+                partial = kwargs.pop("partial", False)
+                instance = self.get_object()
+                serializer = self.get_serializer(
+                    instance, data=request.data, partial=partial
+                )
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
 
-                    if getattr(instance, "_prefetched_objects_cache", None):
-                        # If 'prefetch_related' has been applied to a queryset, we need to
-                        # forcibly invalidate the prefetch cache on the instance.
-                        instance._prefetched_objects_cache = {}
+                if getattr(instance, "_prefetched_objects_cache", None):
+                    # If 'prefetch_related' has been applied to a queryset, we need to
+                    # forcibly invalidate the prefetch cache on the instance.
+                    instance._prefetched_objects_cache = {}
 
-                    return Response(serializer.data, 200)
+                return Response(serializer.data, 200)
 
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
@@ -254,6 +267,48 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                 "you are trying to delete someone's profile",
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+
+import json
+
+
+class UpdateStudentProfileView(APIView):
+    def put(self, request, id):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            phone_number = request.data["phone_number"]
+            last_name = request.data["last_name"]
+            first_name = request.data["first_name"]
+            teleg_account = request.data["teleg_account"]
+            parent_phone = request.data["parent_phone"]
+            parent_teleg_account = request.data["parent_teleg_account"]
+            tutition_fee = request.data["tuition_fee"]
+
+            student = StudentProfile.objects.get(id=int(id))
+
+            if student.teacher.id == user.teacher_profile.id:
+                my_user = User.objects.get(student_profile=student.id)
+                if (
+                    User.objects.exclude(pk=user.id)
+                    .filter(phone_number=phone_number)
+                    .exists()
+                ):
+                    raise serializers.ValidationError(
+                        {"email": "This email is already in use."}
+                    )
+
+                my_user.phone_number = phone_number
+                my_user.last_name = last_name
+                my_user.first_name = first_name
+                my_user.save()
+
+                student.teleg_account = teleg_account
+                student.parent_phone = parent_phone
+                student.parent_teleg_account = parent_teleg_account
+                student.tuition_fee = tutition_fee
+                student.save()
+
+                return Response(request.data)
 
 
 class AssignStudentToTeacherView(APIView):
@@ -412,7 +467,7 @@ class GroupRUDView(APIView):
         if str(user.role) == "TEACHER":
             name = request.data["name"]
 
-            teacher_id = request.data["teacher"]
+            teacher_id = user.id
             techr_obj = TeacherProfile.objects.filter(id=teacher_id).first()
             groups = Group.objects.create(name=name, teacher=techr_obj)
 

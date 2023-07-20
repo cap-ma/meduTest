@@ -135,6 +135,16 @@ class StudentProfileSerialzer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class StudentUpdateSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField()
+    last_name = serializers.CharField()
+    first_name = serializers.CharField()
+
+    class Meta:
+        model = StudentProfile
+        fields = ["phone_number", "last_name", "first_name", ""]
+
+
 class GroupSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
