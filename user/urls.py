@@ -18,6 +18,8 @@ from .views import (
     StudentProfileList,
     StudentGetMe,
     UpdateStudentProfileView,
+    GroupList,
+    StudentFilterView,
 )
 
 urlpatterns = [
@@ -26,6 +28,10 @@ urlpatterns = [
     path("register/student", StudentRegisterView.as_view()),
     path("login/student", StudentLoginView.as_view()),
     path("student/list", StudentProfileList.as_view()),
+    path(
+        "student/filter",
+        StudentFilterView.as_view(),
+    ),
     path("student/get_me", StudentGetMe.as_view()),
     path("student/get_by_id/<int:pk>", StudentProfileRUDView.as_view()),
     path("student/update_by_id/<int:id>", UpdateStudentProfileView.as_view()),
@@ -41,4 +47,7 @@ urlpatterns = [
     path("teacher/get_me", TeacherGetMeView.as_view()),
     path("teacher/update_by_id/<int:pk>", TeachertRUDView.as_view()),
     path("group/create", GroupRUDView.as_view()),
+    path("group/get/<int:id>", GroupRUDView.as_view()),
+    path("group/list", GroupList.as_view()),
+    path("group/delete/<int:id>", GroupRUDView.as_view()),
 ]

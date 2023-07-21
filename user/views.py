@@ -171,6 +171,31 @@ class StudentProfileList(generics.ListAPIView):
             return Response(my_dict, 200)
 
 
+class StudentFilterView(APIView):
+    def get(self, request):
+        user = authenticate(request=request)
+
+        if user.role == "TEACHER":
+            qs = User.objects.all()
+            phone_number = request.data["phone_number"]
+            first_name = request.data["first_name"]
+            last_name = request.data["last_name"]
+            off_balance = request.data["off_balance"]
+
+            if phone_number != "" and phone_number is not None:
+                qs = qs.filter(phone_number__contains=phone_number)
+            elif first_name != "" and first_name is not None:
+                qs = qs.filter(first_name__contains=first_name)
+            elif last_name != "" and last_name is not None:
+                qs = qs.filter(last_name__contains=last_name)
+            elif off_balance == str(1):
+                qs = qs.filter(balance__lte=0)
+          
+
+            return Response(qs, status=status.HTTP_200_OK)
+        return status.HTTP_401_UNAUTHORIZED
+
+
 class StudentGetMe(APIView):
     def get(self, request):
         user = authenticate(request)
@@ -216,41 +241,6 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-    def update(self, request, *args, **kwargs):
-        user = authenticate(request)
-
-        if user.role == "TEACHER":
-            student = StudentProfile.objects.get(id=int(kwargs["pk"]))
-
-            if student.teacher.id == user.teacher_profile.id:
-                my_user = User.objects.get(student_profile=student.id)
-                if (
-                    User.objects.exclude(pk=user.id)
-                    .filter(phone_number=kwargs["phone_number"])
-                    .exists()
-                ):
-                    raise serializers.ValidationError(
-                        {"email": "This email is already in use."}
-                    )
-                my_user.phone_number = kwargs["phone_number"]
-                my_user.last_name = kwargs["last_name"]
-                my_user.first_name = kwargs["first_name"]
-                my_user.save()
-                partial = kwargs.pop("partial", False)
-                instance = self.get_object()
-                serializer = self.get_serializer(
-                    instance, data=request.data, partial=partial
-                )
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-
-                if getattr(instance, "_prefetched_objects_cache", None):
-                    # If 'prefetch_related' has been applied to a queryset, we need to
-                    # forcibly invalidate the prefetch cache on the instance.
-                    instance._prefetched_objects_cache = {}
-
-                return Response(serializer.data, 200)
-
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
         if user.role == "TEACHER":
@@ -267,9 +257,6 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                 "you are trying to delete someone's profile",
                 status=status.HTTP_403_FORBIDDEN,
             )
-
-
-import json
 
 
 class UpdateStudentProfileView(APIView):
@@ -330,11 +317,15 @@ class AssignStudentToTeacherView(APIView):
 class AssignStudentToGroupView(APIView):
     def put(self, request, id):
         user = authenticate(request)
-        if user:
+        if user.role == "TEACHER":
             student_id = request.data["student_id"]
-            student = StudentProfile.objects.filter(id=student_id).first()
+            student = StudentProfile.objects.filter(
+                id=student_id, teacher=user.teacher_profile.id
+            ).first()
 
-            group_obj = Group.objects.filter(id=id).first()
+            group_obj = Group.objects.filter(
+                id=id, teacher=user.teacher_profile.id
+            ).first()
             student.group = group_obj
             student.save()
             serialzer_student = StudentProfileSerialzer(student)
@@ -455,11 +446,20 @@ class TeachertRUDView(generics.RetrieveUpdateDestroyAPIView):
 class GroupRUDView(APIView):
     def get(self, request, id):
         user = authenticate(request=request)
-        if user.role == "Teacher":
-            teacher_id = TeacherProfile.objects.get(user__id=int(user.id))
-            groups = Group.objects.filter(id=id, teacher__id=teacher_id).first()
-            serializer = GroupSerializer(groups)
-            return Response(serializer.data, 200)
+
+        if user.role == "TEACHER":
+            try:
+                group = Group.objects.get(id=id, teacher=user.teacher_profile.id)
+                group_count = StudentProfile.objects.filter(group=group).count()
+
+                serializer = GroupSerializer(group)
+                data_ser = serializer.data
+                data_ser["student_number"] = group_count
+                return Response(data_ser, 200)
+            except:
+                return Response(
+                    {"message": "dont try to connects other's profile"}, 401
+                )
 
     def post(self, request):
         user = authenticate(request=request)
@@ -467,12 +467,27 @@ class GroupRUDView(APIView):
         if str(user.role) == "TEACHER":
             name = request.data["name"]
 
-            teacher_id = user.id
-            techr_obj = TeacherProfile.objects.filter(id=teacher_id).first()
-            groups = Group.objects.create(name=name, teacher=techr_obj)
+            groups = Group.objects.create(name=name, teacher=user.teacher_profile)
 
             serializer = GroupSerializer(groups)
             return Response(serializer.data, 201)
+
+    def delete(self, request, id):
+        user = authenticate(request=request)
+        if str(user.role) == "TEACHER":
+            group = Group.objects.get(id=id, teacher=user.teacher_profile.id)
+            group.delete()
+
+            return Response({"messege": "object deleted succesfully"}, 200)
+
+
+class GroupList(APIView):
+    def get(self, request):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            groups = Group.objects.filter(teacher=user.teacher_profile.id)
+            serializer = GroupSerializer(groups, many=True)
+            return Response(serializer.data, 200)
 
 
 class PaymentView(APIView):

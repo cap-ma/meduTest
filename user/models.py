@@ -83,7 +83,7 @@ class StudentProfile(models.Model):
     parent_teleg_account = models.CharField(max_length=30)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
     tuition_fee = models.FloatField(default=0)
-    group = models.ForeignKey(Group, on_delete=models.DO_NOTHING, null=True)
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
@@ -123,7 +123,7 @@ class User(AbstractUser):
 
 class Attendance(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
-    group = models.ForeignKey(Group, on_delete=models.DO_NOTHING)
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
     date = models.DateField()
     student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING)
     status = models.CharField(max_length=25)
@@ -132,7 +132,7 @@ class Attendance(models.Model):
 class Payment(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
-    group = models.ForeignKey(Group, on_delete=models.DO_NOTHING)
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
     sum = models.FloatField()
     comment = models.CharField(max_length=50, null=True, blank=True)
 
