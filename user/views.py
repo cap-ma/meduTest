@@ -502,6 +502,20 @@ class GroupList(APIView):
             return Response(my_list, 200)
 
 
+class GroupStudentListView(APIView):
+    def get(self, request, id):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            group = Group.objects.get(id=id, teacher=user.teacher_profile)
+            students = StudentProfile.objects.filter(
+                group=group, teacher=user.teacher_profile.id
+            )
+
+            serializer = StudentProfileSerialzer(students, many=True)
+
+            return Response(serializer.data, 200)
+
+
 class PaymentView(APIView):
     def post(self, request):
         student = StudentProfile.objects.filter(id=int(request.data["student"])).first()

@@ -20,6 +20,7 @@ from .views import (
     UpdateStudentProfileView,
     GroupList,
     StudentFilterView,
+    GroupStudentListView,
 )
 
 urlpatterns = [
@@ -50,4 +51,5 @@ urlpatterns = [
     path("group/get/<int:id>", GroupRUDView.as_view()),
     path("group/list", GroupList.as_view()),
     path("group/delete/<int:id>", GroupRUDView.as_view()),
+    path("group/student_list/<int:id>", GroupStudentListView.as_view()),
 ]
