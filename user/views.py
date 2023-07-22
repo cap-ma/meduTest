@@ -39,13 +39,16 @@ def authenticate(request):
         raise AuthenticationFailed("Unauthenticated without token")
 
     try:
+        print("smththhth")
         payload = jwt.decode(token, "secret", algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
+        print("hellloo")
         raise AuthenticationFailed("Unauthenticated")
+    except:
+        raise AuthenticationFailed("Smth went wrong ")
 
+    print("sdf")
     user = User.objects.filter(id=payload["id"]).first()
-
-    user_serialzed = UserSerilizer(user)
 
     if user:
         return user
@@ -190,7 +193,6 @@ class StudentFilterView(APIView):
                 qs = qs.filter(last_name__contains=last_name)
             elif off_balance == str(1):
                 qs = qs.filter(balance__lte=0)
-          
 
             return Response(qs, status=status.HTTP_200_OK)
         return status.HTTP_401_UNAUTHORIZED

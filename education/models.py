@@ -28,19 +28,24 @@ class OrderTestInfo(models.Model):
     deadline = models.DateField()
     from_id = models.IntegerField()
     to_id = models.IntegerField()
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
 
 
 class OrderTestPack(models.Model):
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
 
 
 class OrderTestPackStudent(models.Model):
     result = models.CharField(max_length=200)
-    is_correct = models.BooleanField()
+    is_correct = models.BooleanField(null=True)
     order_test_pack = models.ForeignKey(OrderTestPack, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
 
 
 class OrderTestInfoStudent(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.CASCADE)
+    submitted = models.BooleanField(default=False)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
