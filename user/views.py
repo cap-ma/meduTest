@@ -488,8 +488,18 @@ class GroupList(APIView):
         user = authenticate(request)
         if user.role == "TEACHER":
             groups = Group.objects.filter(teacher=user.teacher_profile.id)
+
             serializer = GroupSerializer(groups, many=True)
-            return Response(serializer.data, 200)
+            my_serializer = serializer.data
+            my_list = list()
+            for x in my_serializer:
+                group = groups.get(id=x["id"])
+                group_count = StudentProfile.objects.filter(group=group).count()
+
+                x["student_number"] = group_count
+                my_list.append(x)
+
+            return Response(my_list, 200)
 
 
 class PaymentView(APIView):
