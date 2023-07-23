@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers
 from .models import WithdrowalBalance
+from .paginations import CustomPagination
 from django.shortcuts import get_object_or_404
 
 from .serializers import (
@@ -149,6 +150,7 @@ class StudentLoginView(APIView):
 class StudentProfileList(generics.ListAPIView):
     queryset = StudentProfile.objects.all()
     serializer_class = StudentProfileSerialzer
+    pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
         user = authenticate(request)
@@ -170,7 +172,7 @@ class StudentProfileList(generics.ListAPIView):
                 my_dict[count]["first_name"] = student.first_name
                 my_dict[count]["last_name"] = student.last_name
                 count = count + 1
-
+            print(my_dict)
             return Response(my_dict, 200)
 
 
@@ -180,10 +182,11 @@ class StudentFilterView(APIView):
 
         if user.role == "TEACHER":
             qs = User.objects.all()
-            phone_number = request.data["phone_number"]
-            first_name = request.data["first_name"]
-            last_name = request.data["last_name"]
-            off_balance = request.data["off_balance"]
+
+            phone_number = request.query_params.get("phone_number", None)
+
+            first_name = request.query_params.get("first_name", None)
+            last_name = request.query_params.get("last_name", None)
 
             if phone_number != "" and phone_number is not None:
                 qs = qs.filter(phone_number__contains=phone_number)
@@ -191,10 +194,10 @@ class StudentFilterView(APIView):
                 qs = qs.filter(first_name__contains=first_name)
             elif last_name != "" and last_name is not None:
                 qs = qs.filter(last_name__contains=last_name)
-            elif off_balance == str(1):
-                qs = qs.filter(balance__lte=0)
 
-            return Response(qs, status=status.HTTP_200_OK)
+            serializer = UserSerilizer(qs, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return status.HTTP_401_UNAUTHORIZED
 
 

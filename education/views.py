@@ -25,6 +25,39 @@ from rest_framework import generics
 from rest_framework.views import APIView
 
 
+class TestListView(APIView):
+    def get(self, request):
+        user = authenticate(request=request)
+
+        if user.role == "TEACHER":
+            tests = Test.objects.filter(teacher=user.teacher_profile)
+            serializer = TestSerializers(tests, many=True)
+
+            return Response(serializer.data, 200)
+
+
+class TestCategoryListView(APIView):
+    def get(self, request):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            test_category = TestCategory.objects.filter(teacher=user.teacher_profile)
+            serializer = TestCategorySerializer(test_category, many=True)
+
+            return Response(serializer.data, 200)
+
+
+class TestGetCategory(APIView):
+    def get(self, request, category_id):
+        user = authenticate(request)
+        if user:
+            test_based_on_category = Test.objects.filter(
+                category=category_id, teacher=user.teacher_profile
+            )
+            serializer = TestSerializers(test_based_on_category, many=True)
+
+            return Response(serializer.data, 200)
+
+
 class TestCategoryCreateView(APIView):
     def post(self, request):
         user = authenticate(request=request)
