@@ -18,4 +18,5 @@ urlpatterns = [
         views.OrderTestInfoStudentAssignView.as_view(),
         name="assign_student",
     ),
+    path("order_test_pack_results", views.OrderTestPackStudentResultView.as_view()),
 ]

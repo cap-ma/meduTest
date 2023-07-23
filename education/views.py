@@ -18,6 +18,7 @@ from .serializers import (
     TestSerializers,
     OrderTestPackSerializers,
     OrderTestPackResponseSerializers,
+    OrderTestPackStudentsSerializer,
 )
 from . import serializers
 from rest_framework import generics
@@ -65,6 +66,8 @@ class TestCreateView(APIView):
 class OrderTestInfoCreateView(APIView):
     def post(self, request):
         user = authenticate(request)
+        print(user)
+
         if user.role == "TEACHER":
             count = request.data["count"]
             level = request.data["level"]
@@ -130,6 +133,7 @@ class OrderTestInfoStudentAssignView(APIView):
 class OrderTestPackGetView(APIView):
     def get(self, request, id):
         user = authenticate(request)
+
         if user.role == "STUDENT":
             student = OrderTestInfoStudent.objects.get(student=user.student_profile.id)
             if student:
@@ -143,4 +147,29 @@ class OrderTestPackGetView(APIView):
 
 class OrderTestPackStudentResultView(APIView):
     def post(self, request):
-        pass
+        user = authenticate(request)
+        if user:
+            my_list = []
+            for x in request.data["students"]:
+                result = x["results"]
+                order_test_pack = x["order_test_pack"]
+
+                test = OrderTestPack.objects.get(id=int(order_test_pack))
+                if result == test.test.answer:
+                    order_test_results = OrderTestPackStudent.objects.create(
+                        result=result,
+                        is_correct=True,
+                        order_test_pack=test,
+                        teacher=user.teacher_profile,
+                    )
+                else:
+                    order_test_results = OrderTestPackStudent.objects.create(
+                        result=result,
+                        is_correct=False,
+                        order_test_pack=test,
+                        teacher=user.teacher_profile,
+                    )
+                my_list.append(order_test_results)
+                serializer = OrderTestPackStudentsSerializer(my_list, many=True)
+
+            return Response(serializer.data, 200)

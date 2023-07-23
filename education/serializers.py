@@ -6,12 +6,19 @@ from .models import (
     TestCategory,
     OrderTestPack,
     OrderTestInfoStudent,
+    OrderTestPackStudent,
 )
+
+
+class OrderTestPackStudentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderTestPackStudent
+        fields = "__all__"
 
 
 class OrderTestInfoStudentsSerializers(serializers.ModelSerializer):
     class Meta:
-        models = OrderTestInfoStudent
+        model = OrderTestInfoStudent
         fields = "__all__"
 
 
