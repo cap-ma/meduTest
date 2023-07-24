@@ -86,6 +86,21 @@ class StudentProfileSerialzer(serializers.ModelSerializer):
             "parent_phone",
             "parent_teleg_account",
             "tuition_fee",
+            "teacher",
+        ]
+
+
+class StudentFilterListViewSerializer(serializers.ModelSerializer):
+    student_profile = StudentProfileSerialzer(required=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "phone_number",
+            "first_name",
+            "last_name",
+            "student_profile",
         ]
 
 

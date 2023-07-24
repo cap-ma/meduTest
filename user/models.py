@@ -67,6 +67,8 @@ class TeacherProfile(models.Model):
 
 class Group(models.Model):
     name = models.CharField(max_length=50)
+    days = models.CharField(max_length=25)
+    date = models.CharField(max_length=15)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

@@ -11,7 +11,7 @@ from .models import (
     OrderTestPackStudent,
 )
 import random
-
+from .paginations import CustomPagination
 
 from .serializers import (
     TestCategorySerializer,
@@ -25,37 +25,72 @@ from rest_framework import generics
 from rest_framework.views import APIView
 
 
-class TestListView(APIView):
+class TestPackView(APIView):
     def get(self, request):
-        user = authenticate(request=request)
-
-        if user.role == "TEACHER":
-            tests = Test.objects.filter(teacher=user.teacher_profile)
-            serializer = TestSerializers(tests, many=True)
-
-            return Response(serializer.data, 200)
+        pass
 
 
-class TestCategoryListView(APIView):
-    def get(self, request):
+class TestListView(generics.ListAPIView):
+    queryset = Test.objects.all()
+    pagination_class = CustomPagination
+    serializer_class = TestSerializers
+
+    def list(self, request, *args, **kwargs):
         user = authenticate(request)
         if user.role == "TEACHER":
-            test_category = TestCategory.objects.filter(teacher=user.teacher_profile)
-            serializer = TestCategorySerializer(test_category, many=True)
+            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(teacher=user.teacher_profile)
 
-            return Response(serializer.data, 200)
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
 
 
-class TestGetCategory(APIView):
-    def get(self, request, category_id):
+class TestCategoryListView(generics.ListAPIView):
+    queryset = TestCategory.objects.all()
+    pagination_class = CustomPagination
+    serializer_class = TestCategorySerializer
+
+    def list(self, request, *args, **kwargs):
         user = authenticate(request)
-        if user:
-            test_based_on_category = Test.objects.filter(
-                category=category_id, teacher=user.teacher_profile
+        if user.role == "TEACHER":
+            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(teacher=user.teacher_profile)
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+
+
+class TestGetCategory(generics.ListAPIView):
+    queryset = Test.objects.all()
+    pagination_class = CustomPagination
+    serializer_class = TestSerializers
+
+    def list(self, request, *args, **kwargs):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            print(kwargs, "kwargs")
+            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(
+                teacher=user.teacher_profile, category=kwargs["category_id"]
             )
-            serializer = TestSerializers(test_based_on_category, many=True)
 
-            return Response(serializer.data, 200)
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
 
 
 class TestCategoryCreateView(APIView):

@@ -17,6 +17,7 @@ from .serializers import (
     WithdrowalBalanceSerializer,
     ExpenseSerializer,
     TeacherProfileSerializer,
+    StudentFilterListViewSerializer,
 )
 
 from rest_framework import status
@@ -147,33 +148,36 @@ class StudentLoginView(APIView):
         return response
 
 
-class StudentProfileList(generics.ListAPIView):
-    queryset = StudentProfile.objects.all()
-    serializer_class = StudentProfileSerialzer
+class StudentProfileListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = StudentFilterListViewSerializer
     pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
         user = authenticate(request)
         if user:
+            phone_number = request.query_params.get("phone_number", None)
+
+            first_name = request.query_params.get("first_name", None)
+            last_name = request.query_params.get("last_name", None)
+
             queryset = self.filter_queryset(self.get_queryset())
-            queryset = queryset.filter(teacher__id=int(user.teacher_profile.id))
+            queryset = queryset.filter(student_profile__teacher=user.teacher_profile)
+
+            if phone_number != "" and phone_number is not None:
+                queryset = queryset.filter(phone_number__contains=phone_number)
+            elif first_name != "" and first_name is not None:
+                queryset = queryset.filter(first_name__contains=first_name)
+            elif last_name != "" and last_name is not None:
+                queryset = queryset.filter(last_name__contains=last_name)
+
+            # queryset = queryset.filter(teacher__id=int(user.teacher_profile.id))
 
             page = self.paginate_queryset(queryset)
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
 
-            serializer = self.get_serializer(queryset, many=True)
-            my_dict = serializer.data
-            count = 0
-            for x in serializer.data:
-                student = User.objects.get(student_profile=int(x["id"]))
-                my_dict[count]["phone_number"] = student.phone_number
-                my_dict[count]["first_name"] = student.first_name
-                my_dict[count]["last_name"] = student.last_name
-                count = count + 1
-            print(my_dict)
-            return Response(my_dict, 200)
+                return self.get_paginated_response(serializer.data)
 
 
 class StudentFilterView(APIView):
@@ -460,6 +464,11 @@ class GroupRUDView(APIView):
                 serializer = GroupSerializer(group)
                 data_ser = serializer.data
                 data_ser["student_number"] = group_count
+                print(data_ser["date"])
+
+                data_ser["days"] = data_ser["days"].split(",")
+
+                data_ser["date"] = data_ser["date"].split(",")
                 return Response(data_ser, 200)
             except:
                 return Response(
@@ -471,8 +480,19 @@ class GroupRUDView(APIView):
 
         if str(user.role) == "TEACHER":
             name = request.data["name"]
-
-            groups = Group.objects.create(name=name, teacher=user.teacher_profile)
+            days = request.data["days"]
+            date = request.data["date"]
+            my_days = ""
+            for x in days:
+                my_days = my_days + x + ","
+            my_days=my_days[:-1]
+            my_date = ""
+            for y in date:
+                my_date = my_date + y + ","
+            my_date=my_date[:-1]
+            groups = Group.objects.create(
+                name=name, days=my_days, date=my_date, teacher=user.teacher_profile
+            )
 
             serializer = GroupSerializer(groups)
             return Response(serializer.data, 201)

@@ -44,9 +44,11 @@ class TestSerializers(serializers.ModelSerializer):
     class Meta:
         model = Test
         fields = "__all__"
+        extra_kwargs = {"answer": {"write_only": True}}
 
 
 class TestCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TestCategory
         fields = "__all__"
+        extra_kwargs = {"answer": {"write_only": True}}
