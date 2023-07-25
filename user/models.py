@@ -97,6 +97,7 @@ class StudentProfile(models.Model):
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    verification_for_bot = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.user)

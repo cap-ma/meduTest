@@ -59,7 +59,7 @@ cover/
 # Django stuff:
 *.log
 local_settings.py
-
+smth.
 
 # Flask stuff:
 instance/

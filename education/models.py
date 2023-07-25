@@ -7,7 +7,7 @@ from user.models import StudentProfile, TeacherProfile
 
 class TestCategory(models.Model):
     title = models.CharField(max_length=200)
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
 
 class Test(models.Model):
