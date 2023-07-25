@@ -343,19 +343,20 @@ class AssignStudentToGroupView(APIView):
 
 class AttendenceView(APIView):
     def post(self, request):
-        request = request.data["attendence"]
+        user = authenticate(request)
+        if user:
+            attendence = request.data["attendence"]
 
-        serializer = AttendenceSerializer(data=request, many=True)
+            serializer = AttendenceSerializer(data=attendence, many=True)
 
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        for x in request:
-            student = StudentProfile.objects.filter(id=int(x["student"])).first()
-            student.balance = float(student.balance) - float(student.tuitionFee)
-            student.save()
-            print(x["student"])
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            for x in attendence:
+                student = StudentProfile.objects.filter(id=int(x["student"])).first()
+                student.balance = float(student.balance) - float(student.tuition_fee)
+                student.save()
 
-        return Response(serializer.data, 201)
+            return Response(serializer.data, 201)
 
 
 class TeacherRegisterView(APIView):
@@ -485,11 +486,11 @@ class GroupRUDView(APIView):
             my_days = ""
             for x in days:
                 my_days = my_days + x + ","
-            my_days=my_days[:-1]
+            my_days = my_days[:-1]
             my_date = ""
             for y in date:
                 my_date = my_date + y + ","
-            my_date=my_date[:-1]
+            my_date = my_date[:-1]
             groups = Group.objects.create(
                 name=name, days=my_days, date=my_date, teacher=user.teacher_profile
             )
@@ -541,18 +542,24 @@ class GroupStudentListView(APIView):
 
 class PaymentView(APIView):
     def post(self, request):
-        student = StudentProfile.objects.filter(id=int(request.data["student"])).first()
-        student.balance = float(student.balance) + float(request.data["sum"])
-        student.save()
-        serializer = PaymentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, 201)
+        user = authenticate(request)
+        if user:
+            student = StudentProfile.objects.filter(
+                id=int(request.data["student"])
+            ).first()
+            student.balance = float(student.balance) + float(request.data["sum"])
+            student.save()
+            serializer = PaymentSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, 201)
 
 
 class ExpenseView(APIView):
     def post(self, request):
-        serializer = ExpenseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, 201)
+        user = authenticate(request)
+        if user:
+            serializer = ExpenseSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, 201)

@@ -19,6 +19,8 @@ from .serializers import (
     OrderTestPackSerializers,
     OrderTestPackResponseSerializers,
     OrderTestPackStudentsSerializer,
+    OrderTestPackGetSerializer,
+    OrderTestInfoSerializers,
 )
 from . import serializers
 from rest_framework import generics
@@ -198,6 +200,28 @@ class OrderTestInfoStudentAssignView(APIView):
             return Response({"message:Students succesfully assigned"}, 200)
 
 
+class OrderTestPackListView(generics.ListAPIView):
+    queryset = OrderTestPack.objects.all()
+    pagination_class = CustomPagination
+    serializer_class = OrderTestPackGetSerializer
+
+    def list(self, request, *args, **kwargs):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(teacher=user.teacher_profile).order_by(
+                "-created_at"
+            )
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+
+
 class OrderTestPackGetView(APIView):
     def get(self, request, id):
         user = authenticate(request)
@@ -221,11 +245,23 @@ class OrderTestPackStudentResultView(APIView):
             for x in request.data["students"]:
                 result = x["results"]
                 order_test_pack = x["order_test_pack"]
+                student_data = x["student"]
 
                 test = OrderTestPack.objects.get(id=int(order_test_pack))
+                print(student_data)
+                print(test.order_test_info)
+                print(user.teacher_profile)
+                
+                student = OrderTestInfoStudent.objects.get(
+                    student__id=student_data,
+                    submitted=False,
+                    teacher=user.teacher_profile,
+                    order_test_info=test.order_test_info,
+                )
                 if result == test.test.answer:
                     order_test_results = OrderTestPackStudent.objects.create(
                         result=result,
+                        student=student,
                         is_correct=True,
                         order_test_pack=test,
                         teacher=user.teacher_profile,
@@ -241,3 +277,42 @@ class OrderTestPackStudentResultView(APIView):
                 serializer = OrderTestPackStudentsSerializer(my_list, many=True)
 
             return Response(serializer.data, 200)
+
+
+class OrderTestInfoView(generics.ListAPIView):
+    queryset = OrderTestInfo.objects.all()
+    pagination_class = CustomPagination
+    serializer_class = OrderTestInfoSerializers
+
+    def list(self, request, *args, **kwargs):
+        user = authenticate(request)
+        if user:
+            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(teacher=user.teacher_profile)
+            page = self.paginate_queryset(queryset)
+
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+
+class GetOrderTestInfoTestPackView(generics.ListAPIView):
+    queryset = OrderTestPack.objects.all()
+    serializer_class = OrderTestPackSerializers
+    pagination_class = CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        user = authenticate(request)
+        if user:
+            id = kwargs["id"]
+            queryset = self.filter_queryset(self.get_queryset())
+            order_test_info = OrderTestInfo.objects.get(id=id)
+            queryset = queryset.filter(
+                teacher=user.teacher_profile, order_test_info=order_test_info
+            )
+            page = self.paginate_queryset(queryset)
+
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+
+                return self.get_paginated_response(serializer.data)

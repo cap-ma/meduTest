@@ -23,4 +23,7 @@ urlpatterns = [
         name="assign_student",
     ),
     path("order_test_pack_results", views.OrderTestPackStudentResultView.as_view()),
+    path("order_test_pack/list", views.OrderTestPackListView.as_view()),
+    path("order_test_info/list", views.OrderTestInfoView.as_view()),
+    path("order_test_info_test/<int:id>", views.GetOrderTestInfoTestPackView.as_view()),
 ]

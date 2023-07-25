@@ -87,6 +87,7 @@ class StudentProfileSerialzer(serializers.ModelSerializer):
             "parent_teleg_account",
             "tuition_fee",
             "teacher",
+            "source",
         ]
 
 
@@ -127,6 +128,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
             parent_phone=student_profile_data["parent_phone"],
             parent_teleg_account=student_profile_data["parent_teleg_account"],
             tuition_fee=student_profile_data["tuition_fee"],
+            source=student_profile_data["source"],
         )
 
         password = validated_data.pop("password", None)

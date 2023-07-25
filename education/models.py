@@ -34,6 +34,7 @@ class OrderTestInfo(models.Model):
 class OrderTestPack(models.Model):
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.CASCADE)
+    created_at = models.DateField(auto_now_add=True)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
 
@@ -41,6 +42,7 @@ class OrderTestInfoStudent(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.CASCADE)
     submitted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
 

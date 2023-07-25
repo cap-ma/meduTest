@@ -79,12 +79,21 @@ class Group(models.Model):
 
 
 class StudentProfile(models.Model):
+    class Source(models.TextChoices):
+        INSTAGRAM = "INSTAGRAM", "Instagram"
+        FACEBOOK = "FACEBOOK", "Facebook"
+        TELEGRAM = "TELEGRAM", "Telegram"
+        FRIEND = "FRIEND", "Friend"
+        LEAFLET = "LEAFLET", "Leaflet"
+        OTHER = "OTHER", "Other"
+
     balance = models.FloatField(default=0)
     teleg_account = models.CharField(max_length=30)
     parent_phone = models.CharField(max_length=13)
     parent_teleg_account = models.CharField(max_length=30)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
     tuition_fee = models.FloatField(default=0)
+    source = models.CharField(max_length=10, choices=Source.choices)
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
