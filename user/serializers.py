@@ -81,6 +81,7 @@ class StudentProfileSerialzer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = [
+            "id",
             "balance",
             "teleg_account",
             "parent_phone",
@@ -97,7 +98,6 @@ class StudentFilterListViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id",
             "phone_number",
             "first_name",
             "last_name",

@@ -19,7 +19,7 @@ from .serializers import (
     TeacherProfileSerializer,
     StudentFilterListViewSerializer,
 )
-
+from .utils import send_to_telegram
 from rest_framework import status
 from .models import User, Group, StudentProfile, TeacherProfile
 import datetime
@@ -283,14 +283,20 @@ class UpdateStudentProfileView(APIView):
             student = StudentProfile.objects.get(id=int(id))
 
             if student.teacher.id == user.teacher_profile.id:
-                my_user = User.objects.get(student_profile=student.id)
+                my_user = User.objects.get(student_profile=student)
+                print(my_user, "my_useeer")
+                print(
+                    User.objects.exclude(student_profile=student).filter(
+                        phone_number=phone_number
+                    )
+                )
                 if (
-                    User.objects.exclude(pk=user.id)
+                    User.objects.exclude(student_profile=student)
                     .filter(phone_number=phone_number)
                     .exists()
                 ):
                     raise serializers.ValidationError(
-                        {"email": "This email is already in use."}
+                        {"phone_number": "This phone_number is already in use."}
                     )
 
                 my_user.phone_number = phone_number
@@ -351,10 +357,20 @@ class AttendenceView(APIView):
 
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
             for x in attendence:
                 student = StudentProfile.objects.filter(id=int(x["student"])).first()
+
+                user = User.objects.get(student_profile=student)
                 student.balance = float(student.balance) - float(student.tuition_fee)
                 student.save()
+
+                send_to_telegram(
+                    chat_id=student.parent_telegram_id,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    status=x["status"],
+                )
 
             return Response(serializer.data, 201)
 

@@ -2,6 +2,9 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from user.models import TeacherProfile, StudentProfile, User
 from user.views import authenticate
+from .utils import sched, send_test_results_to_parent
+from datetime import date, datetime
+
 from .models import (
     Test,
     TestCategory,
@@ -25,6 +28,7 @@ from .serializers import (
 from . import serializers
 from rest_framework import generics
 from rest_framework.views import APIView
+from django.utils import timezone
 
 
 class TestPackView(APIView):
@@ -136,7 +140,6 @@ class TestCreateView(APIView):
 class OrderTestInfoCreateView(APIView):
     def post(self, request):
         user = authenticate(request)
-        print(user)
 
         if user.role == "TEACHER":
             count = request.data["count"]
@@ -161,6 +164,24 @@ class OrderTestInfoCreateView(APIView):
                 teacher=user.teacher_profile,
             )
 
+            print(deadline)
+            deadline_for_scheduled_task = deadline.split("-")
+            print(deadline_for_scheduled_task)
+            sched.add_job(
+                send_test_results_to_parent,
+                "date",
+                run_date=datetime(
+                    int(deadline_for_scheduled_task[0]),
+                    int(deadline_for_scheduled_task[1]),
+                    int(deadline_for_scheduled_task[2]),
+                    11,
+                    10,
+                    0,
+                ),
+                args=["text"],
+            )
+
+            sched.start()
             first_id = tests.first()
             last_id = tests.last()
             random_nums_list = random.sample(
@@ -251,7 +272,7 @@ class OrderTestPackStudentResultView(APIView):
                 print(student_data)
                 print(test.order_test_info)
                 print(user.teacher_profile)
-                
+
                 student = OrderTestInfoStudent.objects.get(
                     student__id=student_data,
                     submitted=False,

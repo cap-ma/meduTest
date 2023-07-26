@@ -1,12 +1,21 @@
-import logging
+from django.core.management.base import BaseCommand
 from dotenv import load_dotenv
 import os
+from django.conf import settings
+from asgiref.sync import sync_to_async
+
+"""
+This is a echo bot.
+It echoes any incoming text messages.
+"""
+
+import logging
+
 from aiogram import Bot, Dispatcher, executor, types
-from django.core.management.base import BaseCommand
+from education.models import Test
+from user.models import User, StudentProfile, TeacherProfile
 
-load_dotenv()
-
-API_TOKEN = os.getenv("BOT_TOKEN")
+API_TOKEN = settings.BOT_TOKEN
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +30,21 @@ async def send_welcome(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
-    await message.reply("Hi!\nI'm EchoBot!\nPowered by aiogram.")
+    student = await StudentProfile.objects.aget(
+        parent_teleg_account=str(message.from_user.username)
+    )
+
+    if student:
+        user = await User.objects.aget(student_profile=student)
+        student.verification_for_bot = True
+        student.parent_telegram_id = str(message.from_user.id)
+        await student.asave()
+
+        await message.answer(
+            f"Sizning ma'lumotlaringiz {user.first_name} {user.last_name}\n Siz Ma'lumotlarni tasdiqlaysizmi"
+        )
+    else:
+        await message.answer("Sizning ma'lumotlaringiz topilmadi")
 
 
 @dp.message_handler(regexp="(^cat[s]?$|puss)")
@@ -49,7 +72,7 @@ async def echo(message: types.Message):
 
 
 class Command(BaseCommand):
-    help = "Run bot command"
+    help = "Closes the specified poll for voting"
 
     def handle(self, *args, **options):
         executor.start_polling(dp, skip_updates=True)
