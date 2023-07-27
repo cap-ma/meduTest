@@ -18,10 +18,11 @@ from .serializers import (
     ExpenseSerializer,
     TeacherProfileSerializer,
     StudentFilterListViewSerializer,
+    StudentIncomeSerializer,
 )
 from .utils import send_to_telegram
 from rest_framework import status
-from .models import User, Group, StudentProfile, TeacherProfile
+from .models import User, Group, StudentProfile, TeacherProfile, UserTraffic
 import datetime
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import generics
@@ -70,7 +71,7 @@ class UserLoginView(APIView):
             raise AuthenticationFailed("incorrect password")
         payload = {
             "id": user.id,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=200),
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=2),
             "iat": datetime.datetime.utcnow(),
         }
 
@@ -107,13 +108,27 @@ class StudentRegisterView(APIView):
             student_profile = StudentProfile.objects.get(
                 id=int(student_.student_profile.id)
             )
-            print(user.teacher_profile.id)
+
             teacher_profile = TeacherProfile.objects.get(
                 id=int(user.teacher_profile.id)
             )
             student_profile.teacher = teacher_profile
-
             student_profile.save()
+            user_income = UserTraffic.objects.get(teacher=teacher_profile)
+
+            if serializer.data["student_profile"]["source"] == "INSTAGRAM":
+                user_income.instagram = int(user_income.instagram) + 1
+            elif serializer.data["student_profile"]["source"] == "FACEBOOK":
+                user_income.facebook = user_income.facebook + 1
+            elif serializer.data["student_profile"]["source"] == "TELEGRAM":
+                user_income.telegram = user_income.telegram + 1
+            elif serializer.data["student_profile"]["source"] == "LEAFLET":
+                user_income.leaflet = user_income.leaflet + 1
+            elif serializer.data["student_profile"]["source"] == "OTHER":
+                user_income.other = user_income.other + 1
+            elif serializer.data["student_profile"]["source"] == "FRIEND":
+                user_income.friend = user_income.friend + 1
+            user_income.save()
 
             mydata = serializer.data
             mydata["id"] = student_profile.id
@@ -514,6 +529,28 @@ class GroupRUDView(APIView):
             serializer = GroupSerializer(groups)
             return Response(serializer.data, 201)
 
+    def put(self, request, id):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            name = request.data["name"]
+            days = request.data["days"]
+            date = request.data["date"]
+            my_days = ""
+            for x in days:
+                my_days = my_days + x + ","
+            my_days = my_days[:-1]
+            my_date = ""
+            for y in date:
+                my_date = my_date + y + ","
+            my_date = my_date[:-1]
+
+            group = Group.objects.get(id=id, teacher=user.teacher_profile.id)
+            group.name = name
+            group.days = my_days
+            group.date = my_date
+
+            group.save()
+
     def delete(self, request, id):
         user = authenticate(request=request)
         if str(user.role) == "TEACHER":
@@ -551,7 +588,17 @@ class GroupStudentListView(APIView):
                 group=group, teacher=user.teacher_profile.id
             )
 
+            my_data = []
             serializer = StudentProfileSerialzer(students, many=True)
+            my_data = serializer.data
+            count = 0
+            for x in students:
+                user = User.objects.get(student_profile=x)
+                my_data[0]["phone_number"] = user.phone_number
+                my_data[count]["first_name"] = user.first_name
+                my_data[count]["last_name"] = user.last_name
+
+                count = count + 1
 
             return Response(serializer.data, 200)
 
@@ -578,4 +625,13 @@ class ExpenseView(APIView):
             serializer = ExpenseSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            return Response(serializer.data, 201)
+
+
+class UserTrafficView(APIView):
+    def get(self, request):
+        user = authenticate(request)
+        if user:
+            income_sources = UserTraffic.objects.get(teacher=user.teacher_profile)
+            serializer = StudentIncomeSerializer(income_sources)
             return Response(serializer.data, 201)

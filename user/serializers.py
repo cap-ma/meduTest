@@ -8,6 +8,7 @@ from .models import (
     Payment,
     WithdrowalBalance,
     Expense,
+    UserTraffic,
 )
 
 
@@ -70,9 +71,10 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.teacher_profile = teacher_profile
         instance.role = "TEACHER"
-        print(instance.role)
+
         instance.save()
-        print(instance.role)
+
+        UserTraffic.objects.create(teacher=teacher_profile)
 
         return instance
 
@@ -199,4 +201,10 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Expense
+        fields = "__all__"
+
+
+class StudentIncomeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserTraffic
         fields = "__all__"

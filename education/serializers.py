@@ -5,8 +5,8 @@ from .models import (
     Test,
     TestCategory,
     OrderTestPack,
-    OrderTestInfoStudent,
-    OrderTestPackStudent,
+    OrderTestInfoAssignStudent,
+    OrderTestPackResultsOfStudent,
 )
 
 
@@ -34,13 +34,13 @@ class OrderTestPackGetSerializer(serializers.ModelSerializer):
 
 class OrderTestPackStudentsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OrderTestPackStudent
+        model = OrderTestPackResultsOfStudent
         fields = "__all__"
 
 
 class OrderTestInfoStudentsSerializers(serializers.ModelSerializer):
     class Meta:
-        model = OrderTestInfoStudent
+        model = OrderTestInfoAssignStudent
         fields = "__all__"
 
 

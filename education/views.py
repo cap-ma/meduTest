@@ -9,9 +9,9 @@ from .models import (
     Test,
     TestCategory,
     OrderTestInfo,
-    OrderTestInfoStudent,
+    OrderTestInfoAssignStudent,
     OrderTestPack,
-    OrderTestPackStudent,
+    OrderTestPackResultsOfStudent,
 )
 import random
 from .paginations import CustomPagination
@@ -25,8 +25,8 @@ from .serializers import (
     OrderTestPackGetSerializer,
     OrderTestInfoSerializers,
 )
-from . import serializers
-from rest_framework import generics
+
+from rest_framework import generics, serializers
 from rest_framework.views import APIView
 from django.utils import timezone
 
@@ -164,9 +164,8 @@ class OrderTestInfoCreateView(APIView):
                 teacher=user.teacher_profile,
             )
 
-            print(deadline)
             deadline_for_scheduled_task = deadline.split("-")
-            print(deadline_for_scheduled_task)
+
             sched.add_job(
                 send_test_results_to_parent,
                 "date",
@@ -174,14 +173,13 @@ class OrderTestInfoCreateView(APIView):
                     int(deadline_for_scheduled_task[0]),
                     int(deadline_for_scheduled_task[1]),
                     int(deadline_for_scheduled_task[2]),
-                    11,
-                    10,
+                    17,
+                    45,
                     0,
                 ),
-                args=["text"],
+                args=[order_test_info.id],
             )
 
-            sched.start()
             first_id = tests.first()
             last_id = tests.last()
             random_nums_list = random.sample(
@@ -213,7 +211,19 @@ class OrderTestInfoStudentAssignView(APIView):
 
             for x in students:
                 student_profile = StudentProfile.objects.get(id=int(x["id"]))
-                order_test_info_student = OrderTestInfoStudent.objects.create(
+
+                if OrderTestInfoAssignStudent.objects.filter(
+                    student=student_profile,
+                    order_test_info=order_test_info,
+                    teacher=user.teacher_profile,
+                ).exists():
+                    raise serializers.ValidationError(
+                        {
+                            "message": "You have assigned this user into this tests' pack "
+                        }
+                    )
+
+                order_test_info_student = OrderTestInfoAssignStudent.objects.create(
                     student=student_profile,
                     order_test_info=order_test_info,
                     teacher=user.teacher_profile,
@@ -248,7 +258,9 @@ class OrderTestPackGetView(APIView):
         user = authenticate(request)
 
         if user.role == "STUDENT":
-            student = OrderTestInfoStudent.objects.get(student=user.student_profile.id)
+            student = OrderTestInfoAssignStudent.objects.get(
+                student=user.student_profile.id
+            )
             if student:
                 tests = OrderTestPack.objects.get(
                     order_test_info=student.order_test_info
@@ -269,18 +281,19 @@ class OrderTestPackStudentResultView(APIView):
                 student_data = x["student"]
 
                 test = OrderTestPack.objects.get(id=int(order_test_pack))
-                print(student_data)
-                print(test.order_test_info)
-                print(user.teacher_profile)
+                print(student_data, "student_id")
+                print(test.order_test_info, "order_Test_info")
+                print(user.teacher_profile, "teacher_profile")
 
-                student = OrderTestInfoStudent.objects.get(
+                student = OrderTestInfoAssignStudent.objects.get(
                     student__id=student_data,
                     submitted=False,
                     teacher=user.teacher_profile,
                     order_test_info=test.order_test_info,
                 )
-                if result == test.test.answer:
-                    order_test_results = OrderTestPackStudent.objects.create(
+                print(student, "this is a student")
+                if str(result) == str(test.test.answer):
+                    order_test_results = OrderTestPackResultsOfStudent.objects.create(
                         result=result,
                         student=student,
                         is_correct=True,
@@ -288,14 +301,15 @@ class OrderTestPackStudentResultView(APIView):
                         teacher=user.teacher_profile,
                     )
                 else:
-                    order_test_results = OrderTestPackStudent.objects.create(
+                    order_test_results = OrderTestPackResultsOfStudent.objects.create(
                         result=result,
                         is_correct=False,
+                        student=student,
                         order_test_pack=test,
                         teacher=user.teacher_profile,
                     )
                 my_list.append(order_test_results)
-                serializer = OrderTestPackStudentsSerializer(my_list, many=True)
+            serializer = OrderTestPackStudentsSerializer(my_list, many=True)
 
             return Response(serializer.data, 200)
 

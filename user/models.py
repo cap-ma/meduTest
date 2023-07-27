@@ -179,3 +179,13 @@ class Expense(models.Model):
     created_at = models.DateTimeField(auto_now=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
+
+
+class UserTraffic(models.Model):
+    instagram = models.IntegerField(default=0)
+    facebook = models.IntegerField(default=0)
+    telegram = models.IntegerField(default=0)
+    friend = models.IntegerField(default=0)
+    leaflet = models.IntegerField(default=0)
+    other = models.IntegerField(default=0)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE)

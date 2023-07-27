@@ -26,8 +26,7 @@ class OrderTestInfo(models.Model):
     count = models.IntegerField()
     level = models.IntegerField()
     deadline = models.DateField()
-    from_id = models.IntegerField()
-    to_id = models.IntegerField()
+    categories = models.CharField(max_length=300)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
 
@@ -38,7 +37,7 @@ class OrderTestPack(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
 
-class OrderTestInfoStudent(models.Model):
+class OrderTestInfoAssignStudent(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.CASCADE)
     submitted = models.BooleanField(default=False)
@@ -46,11 +45,13 @@ class OrderTestInfoStudent(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
 
-class OrderTestPackStudent(models.Model):
+class OrderTestPackResultsOfStudent(models.Model):
     result = models.CharField(max_length=200)
     student = models.ForeignKey(
-        OrderTestInfoStudent, on_delete=models.SET_NULL, null=True
+        OrderTestInfoAssignStudent, on_delete=models.SET_NULL, null=True
     )
     is_correct = models.BooleanField(null=True)
-    order_test_pack = models.ForeignKey(OrderTestPack, on_delete=models.CASCADE)
+    order_test_info = models.ForeignKey(
+        OrderTestInfo, on_delete=models.CASCADE, null=True
+    )
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
