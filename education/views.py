@@ -24,6 +24,7 @@ from .serializers import (
     OrderTestPackStudentsSerializer,
     OrderTestPackGetSerializer,
     OrderTestInfoSerializers,
+    OrderTestPackSimpleSerializers,
 )
 
 from rest_framework import generics, serializers
@@ -191,12 +192,19 @@ class OrderTestInfoCreateView(APIView):
                     order_test_info=order_test_info,
                     teacher=user.teacher_profile,
                 )
+
                 order_test_pack_list.append(order_test_pack)
+            serialzer = OrderTestPackSimpleSerializers(order_test_pack)
+            my_list = serialzer.data
+            my_list["name"] = "Test"
+
+            """my_list = order_test_pack
+            my_list["name"] = "Tests"""
             order_test_pack_serializer = OrderTestPackSerializers(
                 order_test_pack_list, many=True
             )
 
-            return Response(order_test_pack_serializer.data, 200)
+            return Response(my_list, 200)
 
 
 class OrderTestInfoStudentAssignView(APIView):

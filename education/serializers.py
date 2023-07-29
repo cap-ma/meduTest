@@ -52,6 +52,12 @@ class OrderTestPackSerializers(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class OrderTestPackSimpleSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = OrderTestPack
+        fields = "__all__"
+
+
 class OrderTestPackResponseSerializers(serializers.ModelSerializer):
     class Meta:
         model = OrderTestPack
