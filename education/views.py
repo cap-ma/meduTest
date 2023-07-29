@@ -145,22 +145,21 @@ class OrderTestInfoCreateView(APIView):
             count = request.data["count"]
             level = request.data["level"]
             deadline = request.data["deadline"]
-            from_id = request.data["from_id"]
-            to_id = request.data["to_id"]
+            categories = request.data["categories"]
+            int_categories = [int(x) for x in categories]
 
             tests = Test.objects.filter(
-                category__lte=to_id,
-                category__gte=from_id,
+                category__in=int_categories,
                 level=level,
                 teacher=user.teacher_profile,
             ).order_by("id")
+            print(tests, "adfadgadf")
 
             order_test_info = OrderTestInfo.objects.create(
                 count=count,
                 level=level,
                 deadline=deadline,
-                from_id=from_id,
-                to_id=to_id,
+                categories=categories,
                 teacher=user.teacher_profile,
             )
 
