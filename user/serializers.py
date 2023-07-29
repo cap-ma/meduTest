@@ -42,6 +42,21 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         ]
 
 
+class TeacherGetMeSerailizer(serializers.ModelSerializer):
+    teacher_profile = TeacherProfileSerializer(required=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "phone_number",
+            "first_name",
+            "last_name",
+            "role",
+            "teacher_profile",
+        ]
+
+
 class TeacherRegisterSerializer(serializers.ModelSerializer):
     teacher_profile = TeacherProfileSerializer(required=True)
 
@@ -91,6 +106,20 @@ class StudentProfileSerialzer(serializers.ModelSerializer):
             "tuition_fee",
             "teacher",
             "source",
+        ]
+
+
+class StudentGetMeSerializer(serializers.ModelSerializer):
+    student_profile = StudentProfileSerialzer(required=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "phone_number",
+            "first_name",
+            "last_name",
+            "role",
+            "student_profile",
         ]
 
 
@@ -161,7 +190,7 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProfile
-        fields = ["phone_number", "last_name", "first_name", ""]
+        fields = ["phone_number", "last_name", "first_name"]
 
 
 class GroupSerializer(serializers.ModelSerializer):

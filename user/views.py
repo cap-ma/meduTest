@@ -7,6 +7,7 @@ from .paginations import CustomPagination
 from django.shortcuts import get_object_or_404
 
 from .serializers import (
+    TeacherGetMeSerailizer,
     TeacherRegisterSerializer,
     StudentRegisterSerializer,
     UserSerilizer,
@@ -19,6 +20,7 @@ from .serializers import (
     TeacherProfileSerializer,
     StudentFilterListViewSerializer,
     StudentIncomeSerializer,
+    StudentGetMeSerializer,
 )
 from .utils import send_to_telegram
 from rest_framework import status
@@ -220,16 +222,17 @@ class StudentFilterView(APIView):
         return status.HTTP_401_UNAUTHORIZED
 
 
-class StudentGetMe(APIView):
+class GetMeView(APIView):
     def get(self, request):
         user = authenticate(request)
 
         if user.role == "STUDENT":
-            print(user.id)
-            student_profile = StudentProfile.objects.get(user__id=user.id)
-            serialized_student = StudentProfileSerialzer(student_profile)
+            serializer = StudentGetMeSerializer(user)
+            return Response(serializer.data, 200)
 
-        return Response(serialized_student.data, 200)
+        elif user.role == "TEACHER":
+            serializer = TeacherGetMeSerailizer(user)
+            return Response(serializer.data, 200)
 
 
 class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
