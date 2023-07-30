@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers
-from .models import WithdrowalBalance
+
 from .paginations import CustomPagination
 from django.shortcuts import get_object_or_404
 
@@ -24,7 +24,7 @@ from .serializers import (
 )
 from .utils import send_to_telegram
 from rest_framework import status
-from .models import User, Group, StudentProfile, TeacherProfile, UserTraffic
+from .models import User, Group, StudentProfile, TeacherProfile, UserTraffic, Config
 import datetime
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import generics
@@ -44,15 +44,12 @@ def authenticate(request):
         raise AuthenticationFailed("Unauthenticated without token")
 
     try:
-        print("smththhth")
         payload = jwt.decode(token, "secret", algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
-        print("hellloo")
         raise AuthenticationFailed("Unauthenticated")
     except:
         raise AuthenticationFailed("Smth went wrong ")
 
-    print("sdf")
     user = User.objects.filter(id=payload["id"]).first()
 
     if user:
@@ -99,6 +96,10 @@ class StudentRegisterView(APIView):
         user = authenticate(request)
 
         if user:
+            config_data = Config.objects.get(teacher=user.teacher_profile)
+
+            request.data["student_profile"]["tuition_fee"] = config_data.tuition_fee
+            print(request.data)
             serializer = StudentRegisterSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
@@ -177,6 +178,8 @@ class StudentProfileListView(generics.ListAPIView):
 
             first_name = request.query_params.get("first_name", None)
             last_name = request.query_params.get("last_name", None)
+            group = request.query_params.get("group", None)
+            deptor = request.query_params.get("deptor", None)
 
             queryset = self.filter_queryset(self.get_queryset())
             queryset = queryset.filter(student_profile__teacher=user.teacher_profile)
@@ -187,6 +190,16 @@ class StudentProfileListView(generics.ListAPIView):
                 queryset = queryset.filter(first_name__contains=first_name)
             elif last_name != "" and last_name is not None:
                 queryset = queryset.filter(last_name__contains=last_name)
+            elif group != "" and group is not None:
+                queryset = queryset.filter(student_profile__group=group)
+            elif deptor == "True":
+                print("it is true")
+                queryset = queryset.filter(student_profile__balance__lt=0)
+                print(queryset)
+            elif deptor == "False":
+                print("that")
+                queryset = queryset.filter(student_profile__balance__gte=0)
+                print(queryset)
 
             # queryset = queryset.filter(teacher__id=int(user.teacher_profile.id))
 
@@ -208,6 +221,9 @@ class StudentFilterView(APIView):
 
             first_name = request.query_params.get("first_name", None)
             last_name = request.query_params.get("last_name", None)
+            group = request.query_params.get("group", None)
+            deptor = request.query_params.get("deptor", None)
+            print(deptor)
 
             if phone_number != "" and phone_number is not None:
                 qs = qs.filter(phone_number__contains=phone_number)
@@ -215,6 +231,16 @@ class StudentFilterView(APIView):
                 qs = qs.filter(first_name__contains=first_name)
             elif last_name != "" and last_name is not None:
                 qs = qs.filter(last_name__contains=last_name)
+            elif group != "" and group is not None:
+                qs = qs.filter(student_profile__group=group)
+            elif deptor == True:
+                print("this")
+                qs = qs.filter(student_profile__balance__lt=0)
+                print(qs)
+            elif deptor == False:
+                print("that")
+                qs = qs.filter(student_profile__balance__gte=0)
+                print(qs)
 
             serializer = UserSerilizer(qs, many=True)
 

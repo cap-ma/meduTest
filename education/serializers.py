@@ -17,6 +17,13 @@ class TestCategorySerializer(serializers.ModelSerializer):
         extra_kwargs = {"answer": {"write_only": True}}
 
 
+class TestUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Test
+        fields = ["id", "question", "a", "b", "c", "d", "level"]
+        extra_kwargs = {"answer": {"write_only": True}}
+
+
 class TestSerializers(serializers.ModelSerializer):
     category = TestCategorySerializer()
 

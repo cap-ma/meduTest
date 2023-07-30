@@ -19,6 +19,7 @@ from .paginations import CustomPagination
 from .serializers import (
     TestCategorySerializer,
     TestSerializers,
+    TestUpdateSerializer,
     OrderTestPackSerializers,
     OrderTestPackResponseSerializers,
     OrderTestPackStudentsSerializer,
@@ -46,7 +47,7 @@ class TestUDView(APIView):
             except Test.DoesNotExist:
                 return Response({"error": "Object not found."}, 404)
 
-            serializer = TestSerializers(instance, data=request.data)
+            serializer = TestUpdateSerializer(instance, data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -146,10 +147,15 @@ class TestGetCategory(generics.ListAPIView):
         user = authenticate(request)
         if user.role == "TEACHER":
             print(kwargs, "kwargs")
+            category = request.query_params.get("category", None)
+            level = request.query_params.get("level", None)
+
             queryset = self.filter_queryset(self.get_queryset())
-            queryset = queryset.filter(
-                teacher=user.teacher_profile, category=kwargs["category_id"]
-            ).order_by("id")
+            queryset = queryset.filter(teacher=user.teacher_profile).order_by("id")
+            if category != "" and category is not None:
+                queryset = queryset.filter(category__id=category)
+            elif level != "" and level is not None:
+                queryset = queryset.filter(level=level)
 
             page = self.paginate_queryset(queryset)
             if page is not None:

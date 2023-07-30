@@ -189,3 +189,8 @@ class UserTraffic(models.Model):
     leaflet = models.IntegerField(default=0)
     other = models.IntegerField(default=0)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE)
+
+
+class Config(models.Model):
+    tuition_fee = models.FloatField(default=0)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
