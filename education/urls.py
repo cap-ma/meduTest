@@ -8,6 +8,7 @@ urlpatterns = [
     path("test_category/list", views.TestCategoryListView.as_view()),
     path("tests_category_based", views.TestGetCategory.as_view()),
     path("test_create", views.TestCreateView.as_view(), name="create_test"),
+    path("get_category/<int:id>", views.TestGetCategoryById.as_view()),
     path("test_category_get", views.TestCategoryCreateView.as_view()),
     path(
         "test_category_create",

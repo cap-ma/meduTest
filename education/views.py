@@ -138,6 +138,17 @@ class TestCategoryUDView(APIView):
             )
 
 
+class TestGetCategoryById(APIView):
+    def get(self, request, id):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            test_category = TestCategory.objects.get(
+                id=id, teacher=user.teacher_profile
+            )
+            serializer = TestCategorySerializer(test_category)
+            return Response(serializer.data, 200)
+
+
 class TestGetCategory(generics.ListAPIView):
     queryset = Test.objects.all()
     pagination_class = CustomPagination
