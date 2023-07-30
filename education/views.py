@@ -26,6 +26,7 @@ from .serializers import (
     OrderTestPackGetSerializer,
     OrderTestInfoSerializers,
     OrderTestPackSimpleSerializers,
+    TestSerializersForTeacherWithAnswer,
 )
 
 from rest_framework import generics, serializers
@@ -68,6 +69,26 @@ class TestUDView(APIView):
             )
 
 
+class TestListViewForTeacher(generics.ListAPIView):
+    queryset = Test.objects.all()
+    pagination_class = CustomPagination
+    serializer_class = TestSerializersForTeacherWithAnswer
+
+    def list(self, request, *args, **kwargs):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            queryset = self.filter_queryset(self.get_queryset())
+            queryset = queryset.filter(teacher=user.teacher_profile).order_by("id")
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+
+
 class TestListView(generics.ListAPIView):
     queryset = Test.objects.all()
     pagination_class = CustomPagination
@@ -102,9 +123,13 @@ class TestCategoryListView(generics.ListAPIView):
             page = self.paginate_queryset(queryset)
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
+                print("zxvczxfv")
+                print(serializer.data)
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
+            print(serializer.data)
+            print("zxvczxfv")
             return Response(serializer.data)
 
 

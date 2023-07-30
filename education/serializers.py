@@ -20,7 +20,7 @@ class TestCategorySerializer(serializers.ModelSerializer):
 class TestUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Test
-        fields = ["id", "question", "a", "b", "c", "d", "level"]
+        fields = ["id", "question", "a", "b", "c", "d", "level", "answer"]
         extra_kwargs = {"answer": {"write_only": True}}
 
 
@@ -29,7 +29,38 @@ class TestSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Test
-        fields = ["id", "question", "a", "b", "c", "d", "level", "teacher", "category"]
+        fields = [
+            "id",
+            "question",
+            "a",
+            "b",
+            "c",
+            "d",
+            "answer",
+            "level",
+            "teacher",
+            "category",
+        ]
+        extra_kwargs = {"answer": {"write_only": True}}
+
+
+class TestSerializersForTeacherWithAnswer(serializers.ModelSerializer):
+    category = TestCategorySerializer()
+
+    class Meta:
+        model = Test
+        fields = [
+            "id",
+            "question",
+            "a",
+            "b",
+            "c",
+            "d",
+            "level",
+            "answer",
+            "teacher",
+            "category",
+        ]
         extra_kwargs = {"answer": {"write_only": True}}
 
 
