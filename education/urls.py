@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path("test/list", views.TestListView.as_view()),
+    path("test/update/<int:pk>", views.TestUDView.as_view()),
+    path("test/delete/<int:pk>", views.TestUDView.as_view()),
     path("test_category/list", views.TestCategoryListView.as_view()),
     path("tests_category_based/<int:category_id>", views.TestGetCategory.as_view()),
     path("test_create", views.TestCreateView.as_view(), name="create_test"),
@@ -11,6 +13,16 @@ urlpatterns = [
         "test_category_create",
         views.TestCategoryCreateView.as_view(),
         name="create_test_category",
+    ),
+    path(
+        "test_category/update/<int:pk>",
+        views.TestCategoryUDView.as_view(),
+        name="update_test_category",
+    ),
+    path(
+        "test_category/delete/<int:pk>",
+        views.TestCategoryUDView.as_view(),
+        name="delete_test_category",
     ),
     path(
         "order_test_create",

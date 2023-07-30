@@ -7,7 +7,7 @@ from user.models import StudentProfile, TeacherProfile
 
 class TestCategory(models.Model):
     title = models.CharField(max_length=200)
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
 
 
 class Test(models.Model):
@@ -19,7 +19,7 @@ class Test(models.Model):
     answer = models.CharField(max_length=200)
     level = models.IntegerField()
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
-    category = models.ForeignKey(TestCategory, on_delete=models.DO_NOTHING, null=True)
+    category = models.ForeignKey(TestCategory, on_delete=models.SET_NULL, null=True)
 
 
 class OrderTestInfo(models.Model):
@@ -42,7 +42,7 @@ class OrderTestInfoAssignStudent(models.Model):
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.CASCADE)
     submitted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
 
 
 class OrderTestPackResultsOfStudent(models.Model):

@@ -4,7 +4,7 @@ from user.models import TeacherProfile, StudentProfile, User
 from user.views import authenticate
 from .utils import sched, send_test_results_to_parent
 from datetime import date, datetime
-
+from rest_framework import status
 from .models import (
     Test,
     TestCategory,
@@ -37,6 +37,36 @@ class TestPackView(APIView):
         pass
 
 
+class TestUDView(APIView):
+    def put(self, request, pk):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            try:
+                instance = Test.objects.get(pk=pk, teacher=user.teacher_profile)
+            except Test.DoesNotExist:
+                return Response({"error": "Object not found."}, 404)
+
+            serializer = TestSerializers(instance, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, 400)
+
+    def delete(self, request, pk):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            try:
+                instance = Test.objects.get(pk=pk, teacher=user.teacher_profile)
+            except Test.DoesNotExist:
+                return Response({"error": "Object not found."}, 404)
+
+            instance.delete()
+            return Response(
+                {"message": "Muvaffaqqiyatli o'chirildi"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+
+
 class TestListView(generics.ListAPIView):
     queryset = Test.objects.all()
     pagination_class = CustomPagination
@@ -46,7 +76,7 @@ class TestListView(generics.ListAPIView):
         user = authenticate(request)
         if user.role == "TEACHER":
             queryset = self.filter_queryset(self.get_queryset())
-            queryset = queryset.filter(teacher=user.teacher_profile)
+            queryset = queryset.filter(teacher=user.teacher_profile).order_by("id")
 
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -77,6 +107,36 @@ class TestCategoryListView(generics.ListAPIView):
             return Response(serializer.data)
 
 
+class TestCategoryUDView(APIView):
+    def put(self, request, pk):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            try:
+                instance = TestCategory.objects.get(pk=pk, teacher=user.teacher_profile)
+            except TestCategory.DoesNotExist:
+                return Response({"error": "Object not found."}, 404)
+
+            serializer = TestCategorySerializer(instance, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, 400)
+
+    def delete(self, request, pk):
+        user = authenticate(request)
+        if user.role == "TEACHER":
+            try:
+                instance = TestCategory.objects.get(pk=pk, teacher=user.teacher_profile)
+            except TestCategory.DoesNotExist:
+                return Response({"error": "Object not found."}, 404)
+
+            instance.delete()
+            return Response(
+                {"message": "Muvaffaqqiyatli o'chirildi"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+
+
 class TestGetCategory(generics.ListAPIView):
     queryset = Test.objects.all()
     pagination_class = CustomPagination
@@ -89,7 +149,7 @@ class TestGetCategory(generics.ListAPIView):
             queryset = self.filter_queryset(self.get_queryset())
             queryset = queryset.filter(
                 teacher=user.teacher_profile, category=kwargs["category_id"]
-            )
+            ).order_by("id")
 
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -120,7 +180,9 @@ class TestCreateView(APIView):
         user = authenticate(request=request)
 
         if user.role == "TEACHER":
-            test_category = TestCategory.objects.get(id=request.data["category"])
+            test_category = TestCategory.objects.get(
+                id=request.data["category"], teacher=user.teacher_profile
+            )
             test = Test.objects.create(
                 question=request.data["question"],
                 a=request.data["a"],
@@ -332,10 +394,19 @@ class OrderTestInfoView(generics.ListAPIView):
             queryset = self.filter_queryset(self.get_queryset())
             queryset = queryset.filter(teacher=user.teacher_profile)
             page = self.paginate_queryset(queryset)
+            my_data = []
+            for x in queryset:
+                orders = OrderTestInfoAssignStudent.objects.filter(
+                    order_test_info=x
+                ).count()
 
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
+                if page is not None:
+                    serializer = OrderTestInfoSerializers(x)
+                    smth = serializer.data
+                    smth["student_count"] = orders
+
+                    my_data.append(smth)
+            return self.get_paginated_response(my_data)
 
 
 class GetOrderTestInfoTestPackView(generics.ListAPIView):

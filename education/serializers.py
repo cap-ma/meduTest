@@ -10,10 +10,19 @@ from .models import (
 )
 
 
+class TestCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestCategory
+        fields = "__all__"
+        extra_kwargs = {"answer": {"write_only": True}}
+
+
 class TestSerializers(serializers.ModelSerializer):
+    category = TestCategorySerializer()
+
     class Meta:
         model = Test
-        fields = "__all__"
+        fields = ["id", "question", "a", "b", "c", "d", "level", "teacher", "category"]
         extra_kwargs = {"answer": {"write_only": True}}
 
 
@@ -62,10 +71,3 @@ class OrderTestPackResponseSerializers(serializers.ModelSerializer):
     class Meta:
         model = OrderTestPack
         fields = ["test", "order_test_info"]
-
-
-class TestCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TestCategory
-        fields = "__all__"
-        extra_kwargs = {"answer": {"write_only": True}}

@@ -214,7 +214,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = "__all__"
+        fields = ["id", "student", "teacher", "sum", "comment", "payment_type"]
 
 
 class WithdrowalBalanceSerializer(serializers.ModelSerializer):

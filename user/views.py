@@ -615,6 +615,7 @@ class PaymentView(APIView):
             ).first()
             student.balance = float(student.balance) + float(request.data["sum"])
             student.save()
+            request.data["teacher"] = user.teacher_profile.id
             serializer = PaymentSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
