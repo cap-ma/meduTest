@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "user",
     "education",
     "corsheaders",
+    "finance",
 ]
 
 MIDDLEWARE = [

@@ -12,6 +12,7 @@ from .models import (
     OrderTestInfoAssignStudent,
     OrderTestPack,
     OrderTestPackResultsOfStudent,
+    OrderTestInfoAssignStudent,
 )
 import random
 from .paginations import CustomPagination
@@ -24,9 +25,11 @@ from .serializers import (
     OrderTestPackResponseSerializers,
     OrderTestPackStudentsSerializer,
     OrderTestPackGetSerializer,
-    OrderTestInfoSerializers,
+    OrderTestInfoSerializer,
     OrderTestPackSimpleSerializers,
     TestSerializersForTeacherWithAnswer,
+    OrderTestInfoAssignedStudentSerializer,
+    
 )
 
 from rest_framework import generics, serializers
@@ -428,7 +431,7 @@ class OrderTestPackStudentResultView(APIView):
 class OrderTestInfoView(generics.ListAPIView):
     queryset = OrderTestInfo.objects.all()
     pagination_class = CustomPagination
-    serializer_class = OrderTestInfoSerializers
+    serializer_class = OrderTestInfoSerializer
 
     def list(self, request, *args, **kwargs):
         user = authenticate(request)
@@ -443,12 +446,29 @@ class OrderTestInfoView(generics.ListAPIView):
                 ).count()
 
                 if page is not None:
-                    serializer = OrderTestInfoSerializers(x)
+                    serializer = OrderTestInfoSerializer(x)
                     smth = serializer.data
                     smth["student_count"] = orders
 
                     my_data.append(smth)
             return self.get_paginated_response(my_data)
+
+class OrderTestInfoGetTeacherView(APIView):
+    def get(self,request):
+        user=authenticate(request)
+        if user:
+            order_test_info_id=request.query_params["id"]
+            order_test_info_assigned_students=OrderTestInfoAssignStudent.objects.filter(order_test_info=order_test_info_id)
+            number_of_assigned_students=order_test_info_assigned_students.count()
+
+            order_test_info=OrderTestInfo.objects.get(id=order_test_info_id,teacher=user.teacher_profile)
+
+            serializer=OrderTestInfoSerializer(order_test_info) 
+            my_data=serializer.data
+            my_data["student_count"]=number_of_assigned_students
+            
+
+            return Response(my_data,200)
 
 
 class GetOrderTestInfoTestPackView(generics.ListAPIView):
@@ -471,3 +491,31 @@ class GetOrderTestInfoTestPackView(generics.ListAPIView):
                 serializer = self.get_serializer(page, many=True)
 
                 return self.get_paginated_response(serializer.data)
+
+class OrderTestinfoAssignedStudentsView(APIView):
+    def get(self,request):
+        user=authenticate(request)
+        if user:
+           
+                assigned_student=OrderTestInfoAssignStudent.objects.filter(student=user.student_profile)
+                print(assigned_student)
+
+                if assigned_student:
+                
+
+                    serializer=OrderTestInfoAssignedStudentSerializer(assigned_student,many=True)
+
+
+                    return Response(serializer.data,200)
+                
+                return Response({"error":"Object Not Found"},404)
+
+class TotalTestCountView(APIView):
+    def get(self,request):
+        user=authenticate(request)
+        if user.role=="TEACHER":
+            test=Test.objects.filter(teacher=user.teacher_profile).count()
+            return Response(test,200)
+        return Response({"error":"Forbidden"},404)
+    
+

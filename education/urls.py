@@ -39,4 +39,7 @@ urlpatterns = [
     path("order_test_pack/list", views.OrderTestPackListView.as_view()),
     path("order_test_info/list", views.OrderTestInfoView.as_view()),
     path("order_test_info_test/<int:id>", views.GetOrderTestInfoTestPackView.as_view()),
+    path("total_test_count",views.TotalTestCountView.as_view()),
+    path("order_test_infos_of_assigned_student",views.OrderTestinfoAssignedStudentsView.as_view()),
+    path("order_test_info_detail",views.OrderTestInfoGetTeacherView.as_view()),
 ]

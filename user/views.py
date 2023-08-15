@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from .paginations import CustomPagination
 from django.shortcuts import get_object_or_404
+from finance.serializers import ExpenseSerializer,PaymentSerializer
 
 from .serializers import (
     TeacherGetMeSerailizer,
@@ -14,9 +15,9 @@ from .serializers import (
     GroupSerializer,
     StudentProfileSerialzer,
     AttendenceSerializer,
-    PaymentSerializer,
+    
     WithdrowalBalanceSerializer,
-    ExpenseSerializer,
+    
     TeacherProfileSerializer,
     StudentFilterListViewSerializer,
     StudentIncomeSerializer,
@@ -50,7 +51,7 @@ def authenticate(request):
     except:
         raise AuthenticationFailed("Smth went wrong ")
 
-    user = User.objects.filter(id=payload["id"]).first()
+    user = User.objects.get(id=payload["id"])
 
     if user:
         return user
@@ -636,9 +637,9 @@ class PaymentView(APIView):
     def post(self, request):
         user = authenticate(request)
         if user:
-            student = StudentProfile.objects.filter(
+            student = StudentProfile.objects.get(
                 id=int(request.data["student"])
-            ).first()
+            )
             student.balance = float(student.balance) + float(request.data["sum"])
             student.save()
             request.data["teacher"] = user.teacher_profile.id

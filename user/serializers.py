@@ -5,12 +5,13 @@ from .models import (
     StudentProfile,
     TeacherProfile,
     Attendance,
-    Payment,
+   
     WithdrowalBalance,
-    Expense,
+    
     UserTraffic,
 )
 
+from finance.models import Payment,Expense
 
 class UserSerilizer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
@@ -209,14 +210,6 @@ class AttendenceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class PaymentSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = Payment
-        fields = ["id", "student", "teacher", "sum", "comment", "payment_type"]
-
-
 class WithdrowalBalanceSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
@@ -225,12 +218,6 @@ class WithdrowalBalanceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ExpenseSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = Expense
-        fields = "__all__"
 
 
 class StudentIncomeSerializer(serializers.ModelSerializer):

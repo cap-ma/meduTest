@@ -1,3 +1,4 @@
+from typing import Iterable, Optional
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 
@@ -102,7 +103,7 @@ class StudentProfile(models.Model):
 
     def __str__(self):
         return str(self.user)
-
+   
 
 class User(AbstractUser):
     username = None
@@ -119,7 +120,7 @@ class User(AbstractUser):
         TEACHER = "TEACHER", "Teacher"
 
     role = models.CharField(max_length=50, choices=Role.choices)
-
+    
     USERNAME_FIELD = "phone_number"
     student_profile = models.OneToOneField(
         StudentProfile, null=True, on_delete=models.SET_NULL
@@ -131,9 +132,6 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
 
-#
-
-
 class Attendance(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
@@ -142,27 +140,6 @@ class Attendance(models.Model):
     status = models.CharField(max_length=25)
 
 
-class Payment(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.DO_NOTHING)
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
-    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
-    sum = models.FloatField()
-    comment = models.CharField(max_length=50, null=True, blank=True)
-
-    NAQT = "NAQT"
-    PLASTIK = "PLASTIK"
-    BOSHQA = "BOSHQA"
-
-    PAYMENT_TYPE = [
-        (NAQT, "naqt"),
-        (PLASTIK, "plastik"),
-        (BOSHQA, "boshqa"),
-    ]
-    payment_type = models.CharField(
-        max_length=7,
-        choices=PAYMENT_TYPE,
-        default=NAQT,
-    )
 
 
 class WithdrowalBalance(models.Model):
@@ -172,13 +149,7 @@ class WithdrowalBalance(models.Model):
     created_at = models.DateTimeField(auto_now=True)
 
 
-class Expense(models.Model):
-    title = models.CharField(max_length=50)
-    comment = models.CharField(max_length=100)
-    expense_amount = models.FloatField()
-    created_at = models.DateTimeField(auto_now=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
+
 
 
 class UserTraffic(models.Model):

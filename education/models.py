@@ -23,9 +23,18 @@ class Test(models.Model):
 
 
 class OrderTestInfo(models.Model):
+   
+    
+    class Status(models.TextChoices):
+        white="WHITE","white"
+        green="GREEN","green"
+        yellow="YELLOW",'yellow'
+
+    name=models.CharField(null=True,max_length=50)
     count = models.IntegerField()
     level = models.IntegerField()
     deadline = models.DateField()
+    status=models.CharField(max_length=10,choices=Status.choices,default=Status.white)
     categories = models.CharField(max_length=300)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
@@ -55,3 +64,4 @@ class OrderTestPackResultsOfStudent(models.Model):
         OrderTestInfo, on_delete=models.CASCADE, null=True
     )
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
+

@@ -60,14 +60,31 @@ class TestSerializersForTeacherWithAnswer(serializers.ModelSerializer):
         ]
 
 
-class OrderTestInfoSerializers(serializers.ModelSerializer):
+class FilterTestInfoSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        data=data.filter(level=2,edition__hide=False)
+        return super(FilterTestInfoSerializer,self).to_representation(data)
+    
+
+class OrderTestInfoSerializer(serializers.ModelSerializer):
     class Meta:
+        
         model = OrderTestInfo
+        list_serailizer_class=FilterTestInfoSerializer
         fields = "__all__"
+
+class OrderTestInfoAssignedStudentSerializer(serializers.ModelSerializer):
+    order_test_info=OrderTestInfoSerializer()
+
+    class Meta:
+        model=OrderTestInfoAssignStudent
+        fields=["submitted","created_at","order_test_info"]
+
+
 
 
 class OrderTestPackGetSerializer(serializers.ModelSerializer):
-    order_test_info = OrderTestInfoSerializers(required=True)
+    order_test_info = OrderTestInfoSerializer(required=True)
     test = TestSerializers(required=True)
 
     class Meta:
