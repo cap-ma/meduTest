@@ -17,6 +17,7 @@ from .models import (
 import random
 from .paginations import CustomPagination
 
+from user.serializers import UserSerilizer
 from .serializers import (
     TestCategorySerializer,
     TestSerializers,
@@ -247,6 +248,7 @@ class TestCreateView(APIView):
 
 class OrderTestInfoCreateView(APIView):
     def post(self, request):
+        my_list=[]
         user = authenticate(request)
 
         if user.role == "TEACHER":
@@ -321,10 +323,17 @@ class OrderTestInfoStudentAssignView(APIView):
             students = request.data["students"]
             test_info = request.data["test_info"]
 
-            order_test_info = OrderTestInfo.objects.get(id=test_info)
+            try:
+                order_test_info = OrderTestInfo.objects.filter(id=test_info,teacher=user.teacher_profile).first()
+            except:
+                return Response({"message":"There are no test_info  with this teacher"},401)
 
             for x in students:
-                student_profile = StudentProfile.objects.get(id=int(x["id"]))
+                try:
+                    student_profile = StudentProfile.objects.get(id=int(x["id"],teacher=user.teacher_profile))
+
+                except:
+                    return Response({"message":"Teacher does not have these students"},401)
 
                 if OrderTestInfoAssignStudent.objects.filter(
                     student=student_profile,
@@ -333,12 +342,12 @@ class OrderTestInfoStudentAssignView(APIView):
                 ).exists():
                     raise serializers.ValidationError(
                         {
-                            "message": "You have assigned this user into this tests' pack "
+                            "message": "You have already assigned this user into this tests' info "
                         }
                     )
 
                 order_test_info_student = OrderTestInfoAssignStudent.objects.create(
-                    student=student_profile,
+                    student_id=x,
                     order_test_info=order_test_info,
                     teacher=user.teacher_profile,
                 )
@@ -412,7 +421,10 @@ class OrderTestPackStudentResultView(APIView):
                         student=student,
                         is_correct=True,
                         order_test_pack=test,
+                        order_test_info=test.order_test_info,
+                    
                         teacher=user.teacher_profile,
+                        
                     )
                 else:
                     order_test_results = OrderTestPackResultsOfStudent.objects.create(
@@ -420,6 +432,7 @@ class OrderTestPackStudentResultView(APIView):
                         is_correct=False,
                         student=student,
                         order_test_pack=test,
+                        order_test_info=test.order_test_info,
                         teacher=user.teacher_profile,
                     )
                 my_list.append(order_test_results)
@@ -428,14 +441,14 @@ class OrderTestPackStudentResultView(APIView):
             return Response(serializer.data, 200)
 
 
-class OrderTestInfoView(generics.ListAPIView):
+class OrderTestInfoListView(generics.ListAPIView):
     queryset = OrderTestInfo.objects.all()
     pagination_class = CustomPagination
     serializer_class = OrderTestInfoSerializer
 
     def list(self, request, *args, **kwargs):
         user = authenticate(request)
-        if user:
+        if user.role=="TEACHER":
             queryset = self.filter_queryset(self.get_queryset())
             queryset = queryset.filter(teacher=user.teacher_profile)
             page = self.paginate_queryset(queryset)
@@ -456,19 +469,44 @@ class OrderTestInfoView(generics.ListAPIView):
 class OrderTestInfoGetTeacherView(APIView):
     def get(self,request):
         user=authenticate(request)
+        my_list=[]
         if user:
             order_test_info_id=request.query_params["id"]
             order_test_info_assigned_students=OrderTestInfoAssignStudent.objects.filter(order_test_info=order_test_info_id)
             number_of_assigned_students=order_test_info_assigned_students.count()
 
             order_test_info=OrderTestInfo.objects.get(id=order_test_info_id,teacher=user.teacher_profile)
-
-            serializer=OrderTestInfoSerializer(order_test_info) 
-            my_data=serializer.data
+            for x in order_test_info_assigned_students:
+                students=User.objects.filter(student_profile=x.student)
+                student_serializer=UserSerilizer(students,many=True)
+                serializer=OrderTestInfoSerializer(order_test_info) 
+                my_data=serializer.data
+                my_list.append(student_serializer.data)
+            my_data["students"]=my_list
             my_data["student_count"]=number_of_assigned_students
-            
 
             return Response(my_data,200)
+
+class GetTeacherTestInfoStudentResultsView(APIView):
+    def get(self,request):
+        user=authenticate(request)
+        student_id=request.query_params["student_id"]
+        order_test_info_id=request.query_params["test_info_id"]
+
+        order_test_info_assigned_student_result=OrderTestInfoAssignStudent.objects.filter(student_id=student_id,order_test_info__id=order_test_info_id,teacher=user.teacher_profile)
+        serializer=OrderTestInfoAssignedStudentSerializer(order_test_info_assigned_student_result,many=True)
+        
+        return Response(serializer.data,201)
+     
+
+
+
+
+
+
+
+
+
 
 
 class GetOrderTestInfoTestPackView(generics.ListAPIView):
@@ -497,7 +535,8 @@ class OrderTestinfoAssignedStudentsView(APIView):
         user=authenticate(request)
         if user:
            
-                assigned_student=OrderTestInfoAssignStudent.objects.filter(student=user.student_profile)
+                assigned_student=OrderTestInfoAssignStudent.objects.get(student=user.student_profile)
+            
                 print(assigned_student)
 
                 if assigned_student:
@@ -510,6 +549,9 @@ class OrderTestinfoAssignedStudentsView(APIView):
                 
                 return Response({"error":"Object Not Found"},404)
 
+
+
+
 class TotalTestCountView(APIView):
     def get(self,request):
         user=authenticate(request)
@@ -518,4 +560,49 @@ class TotalTestCountView(APIView):
             return Response(test,200)
         return Response({"error":"Forbidden"},404)
     
+
+##############################
+
+class TestInfoDetailForStudentView(APIView):
+    def get(self,request,id):
+        user=authenticate(request=request)
+        if user.role=="STUDENT":
+           
+            try:
+
+                order_test_info=OrderTestInfoAssignStudent.objects.get(order_test_info__id=id,student=user.student_profile)
+              
+                """ print("smth")
+                print(user.student_profile)
+                if user.student_profile.teacher!=order_test_info.teacher:
+                    return Response({"message":"you are not this teacher's student , bula siz bashqa odamni uquvchisikankisiz ,nima qlasz berlaga adashib"},401)"""
+            except:
+
+                return Response({"message":"you are not assigned or there is not test info"},401)
+        
+            my_dict={}
+            if order_test_info.submitted==False:
+
+                print("heree")
+                
+
+                serializer=OrderTestInfoAssignedStudentSerializer(order_test_info)
+                if serializer.is_valid():
+                    print(serializer.data)
+
+                    test_pack=OrderTestPack.objects.filter(order_test_info=order_test_info.order_test_info)
+
+                    test_pack_serializer=OrderTestPackSerializers(test_pack,many=True)
+                
+                    my_dict=serializer.data
+                    my_dict["test_pack"]=test_pack_serializer.data
+                
+                
+                    return Response(my_dict,200)
+            
+        return Response({"message":"Unauthorized"},401)
+            
+            
+            
+
 
