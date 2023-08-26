@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+from user.models import User
 from .models import (
     OrderTestInfo,
     Test,
@@ -80,7 +80,10 @@ class OrderTestInfoAssignedStudentSerializer(serializers.ModelSerializer):
         model=OrderTestInfoAssignStudent
         fields=["submitted","created_at","order_test_info"]
 
-
+class UserForOrderTestInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=["date_joined","first_name","last_name","phone_number"]
 
 
 class OrderTestPackGetSerializer(serializers.ModelSerializer):

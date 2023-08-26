@@ -32,6 +32,7 @@ class UserSerilizer(serializers.ModelSerializer):
         return instance
 
 
+
 class TeacherProfileSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
