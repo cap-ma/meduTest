@@ -68,13 +68,13 @@ class PaymentListFilterView(APIView):
             if phone_number is not None and phone_number!="":
                 qs=qs.filter(student__user__phone_number__contains=phone_number)
             
-            elif (full_name is not None and full_name!=""):
+            if (full_name is not None and full_name!=""):
                 qs=qs.filter(student__user__first_name__contains=full_name)
-            elif (full_name is not None and full_name !=""):
+            if (full_name is not None and full_name !=""):
                 qs=qs.filter(student__user__last_name__contains=full_name)
-            elif from_date is not None and from_date!="":
+            if from_date is not None and from_date!="":
                 qs=qs.filter(created_at__gt=from_date)
-            elif to_date is not None and to_date!="":
+            if to_date is not None and to_date!="":
                 qs=qs.filter(created_at__lt=to_date)
 
             serializer=PaymentSerializerForFinance(qs,many=True)
