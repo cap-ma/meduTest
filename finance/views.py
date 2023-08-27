@@ -10,7 +10,7 @@ from user.views import authenticate
 from .serializers import ExpenseSerializer,PaymentSerializerForFinance,PaymentSerializer
 
 import datetime
-from datetime import datetime , timedelta
+from datetime import datetime , timedelta,date
 
 def get_first_date_of_current_month(year, month):
     """Return the first date of the month.
@@ -85,7 +85,7 @@ class ExpenseListView(APIView):
         user=authenticate(request)
         if user.role=="TEACHER":
             expenses=Expense.objects.filter(teacher=user.teacher_profile) 
-            serializer=ExpenseSerializer(expenses)
+            serializer=ExpenseSerializer(expenses,many=True)
             return Response(serializer.data,200)
         return Response({"message":"Forbidden"},404)
     
@@ -105,8 +105,9 @@ class IncomeExpenseChartView(APIView):
                 return Response({"message":"No time data provided"},404)
             
             print(type_of_time)        
-            time_list=time.split("-")
-            time_converted=datetime(year=int(time_list[0]),month=int(time_list[1]),day=int(time_list[2]))
+            # time_list=time.split("-")
+            time_converted=date.fromtimestamp(float(time)) 
+            """(year=int(time_list[0]),month=int(time_list[1]),day=int(time_list[2]))"""
             year=time_converted.year
 
             if type_of_time=="monthly":
@@ -123,15 +124,17 @@ class IncomeExpenseChartView(APIView):
                     return Response(payment_expense_dict)
 
             elif(type_of_time=="yearly"):
-                payment_expense_dict={}
+            
                 payments=Payment.objects.filter(teacher=user.teacher_profile)
                 expenses=Expense.objects.filter(teacher=user.teacher_profile)
 
                 my_dict_payment={}
                 my_dict_expense={}
                 my_list=[]
+                payment_expense_dict={}
                 print(time_converted.month,"month")
-                for x in range(int(time_converted.month)):                   
+                for x in range(int(time_converted.month)):    
+                           
                     month=x+1
 
                     print(month,"heeereee")
@@ -147,7 +150,10 @@ class IncomeExpenseChartView(APIView):
                     payment_expense_dict["payment"]=my_dict_payment
                     payment_expense_dict["expense"]=my_dict_expense
 
-                    my_list.append(payment_expense_dict)
+                my_list.append(payment_expense_dict)
+                   
+               
+                print(my_list,"`````````````````")
 
                 return Response(my_list)
 
