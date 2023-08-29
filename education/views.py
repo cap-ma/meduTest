@@ -461,11 +461,13 @@ class OrderTestInfoListView(generics.ListAPIView):
                 ).count()
 
                 if page is not None:
+                    
                     serializer = OrderTestInfoSerializer(x)
                     smth = serializer.data
                     smth["student_count"] = orders
 
                     my_data.append(smth)
+                    
             return self.get_paginated_response(my_data)
 
 class OrderTestInfoGetTeacherView(APIView):

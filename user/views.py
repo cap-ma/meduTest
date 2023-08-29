@@ -33,6 +33,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 import jwt
+import logging
 
 
 @csrf_exempt
@@ -60,8 +61,13 @@ def authenticate(request):
 
 class UserLoginView(APIView):
     def post(self, request):
-        phone_number = request.data["phone_number"]
-        password = request.data["password"]
+        try:
+            phone_number = request.data["phone_number"]
+            password = request.data["password"]
+        except KeyError:
+         
+            return Response({"message":"phone_number or password not provided correctly"},400)
+        
         user = User.objects.filter(phone_number=phone_number).first()
 
         if user is None:
@@ -85,10 +91,15 @@ class UserLoginView(APIView):
 
 class UserRegisterView(APIView):
     def post(self, request):
-        serializer = UserSerilizer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
 
-        serializer.save()
+            serializer = UserSerilizer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            serializer.save()
+        except:
+            logging.info("error happened because of problem in user serialization ")
+            return Response({"message":"Error happened while creating user"})
         return Response(serializer.data, 201)
 
 
@@ -97,10 +108,14 @@ class StudentRegisterView(APIView):
         user = authenticate(request)
 
         if user:
-            config_data = Config.objects.get(teacher=user.teacher_profile)
+            try:
+                config_data = Config.objects.get(teacher=user.teacher_profile)
+            except Exception as e:
+                logging.error(e)
+                return Response({"message":"You should first create tutition fee for your course then you can create student "},400)
 
             request.data["student_profile"]["tuition_fee"] = config_data.tuition_fee
-            print(request.data)
+      
             serializer = StudentRegisterSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
@@ -432,8 +447,11 @@ class TeacherRegisterView(APIView):
 
 class TeachertLoginView(APIView):
     def post(self, request):
-        phone_number = request.data["phone_number"]
-        password = request.data["password"]
+        try:
+            phone_number = request.data["phone_number"]
+            password = request.data["password"]
+        except:
+            return Response({"message":"password or number not provided properly"},400)
         teacher = User.objects.filter(phone_number=phone_number).first()
 
         if teacher is None:
