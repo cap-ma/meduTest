@@ -60,15 +60,13 @@ class PaymentListFilterView(APIView):
         if user.role=="TEACHER":
             phone_number=request.query_params.get("phone")
             full_name=request.query_params.get("full_name")
-            from_date_timestamp=request.query_params.get("from")
-           
+            from_date_timestamp=request.query_params.get("from")        
             to_date_timestamp=request.query_params.get("to")
+            
             if from_date_timestamp:
                 from_date=date.fromtimestamp(float(from_date_timestamp))
             if to_date_timestamp:
                 to_date=date.fromtimestamp(float(to_date_timestamp))
-
-
 
             qs=Payment.objects.filter(teacher=user.teacher_profile)
            
@@ -105,23 +103,30 @@ class IncomeExpenseChartView(APIView):
                 type_of_time=request.query_params.get("type")
             except Exception:
                 return Response({"message":"No type data provided"},404)
+            time_converted=datetime.today()
             try:
+                
+                from_time=request.query_params.get("from_time")
+                print(from_time)
+                to_time=request.query_params.get("to_time")
+                print(to_time)
 
-                time=request.query_params.get("time")
             except Exception:
                 return Response({"message":"No time data provided"},404)
             
             print(type_of_time)        
             # time_list=time.split("-")
-            time_converted=date.fromtimestamp(float(time)) 
+            from_time_converted=date.fromtimestamp(float(from_time)) 
+            to_time_converted=date.fromtimestamp(float(to_time))
+
             """(year=int(time_list[0]),month=int(time_list[1]),day=int(time_list[2]))"""
-            year=time_converted.year
+            year=from_time_converted.year
 
             if type_of_time=="monthly":
                 payment_expense_dict={}
-                if time:
-                    expenses=Expense.objects.filter(teacher=user.teacher_profile,created_at__gt=time_converted)
-                    payments=Payment.objects.filter(teacher=user.teacher_profile,created_at__gt=time_converted)
+                if from_time_converted or to_time_converted:
+                    expenses=Expense.objects.filter(teacher=user.teacher_profile,created_at__gt=from_time_converted,created_at__lt=to_time_converted)
+                    payments=Payment.objects.filter(teacher=user.teacher_profile,created_at__gt=from_time_converted,created_at__lt=to_time_converted)
                     print(payments)
                     payment_serializer=PaymentSerializer(payments,many=True)
                     expense_serializer=ExpenseSerializer(expenses,many=True)

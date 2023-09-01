@@ -48,9 +48,9 @@ def authenticate(request):
     try:
         payload = jwt.decode(token, "secret", algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
-        raise AuthenticationFailed("Unauthenticated")
+        raise AuthenticationFailed({"message":"Unauthenticated"})
     except:
-        raise AuthenticationFailed("Smth went wrong ")
+        raise AuthenticationFailed({"message":"Token Not Provided"})
 
     user = User.objects.get(id=payload["id"])
 
@@ -115,50 +115,84 @@ class StudentRegisterView(APIView):
                 return Response({"message":"You should first create tutition fee for your course then you can create student "},400)
 
             request.data["student_profile"]["tuition_fee"] = config_data.tuition_fee
-      
-            serializer = StudentRegisterSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-
-            serializer.save()
-
-            serializer_id = serializer.data["id"]
+            try:
+                print(request.data["phone_number"])
+                registered_student=User.objects.filter(phone_number=request.data["phone_number"],role="STUDENT").first()
+                if registered_student:
+                    return Response({"message":"User with this phone number already registered"},400)
+            except:
+                return Response({"message":"please fill all fields"},400)
+            try:
+                serializer = StudentRegisterSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            except Exception as e:
+                print(e)
+                return Response({"message":"fill all fields"},400)
+            
+            try:
+                serializer_id = serializer.data["id"]
+            except:
+                return Response({"message":"Id not provided"})
 
             student_ = get_object_or_404(User, id=int(serializer_id))
-            student_profile = StudentProfile.objects.get(
-                id=int(student_.student_profile.id)
-            )
+            
+            try:
 
-            teacher_profile = TeacherProfile.objects.get(
-                id=int(user.teacher_profile.id)
-            )
-            student_profile.teacher = teacher_profile
-            student_profile.save()
-            user_income = UserTraffic.objects.get(teacher=teacher_profile)
+                student_profile = StudentProfile.objects.get(
+                    id=int(student_.student_profile.id)
+                )
+            except:
+                return Response({"message":"Not Found StudentProfile"})
+            
+        
 
-            if serializer.data["student_profile"]["source"] == "INSTAGRAM":
-                user_income.instagram = int(user_income.instagram) + 1
-            elif serializer.data["student_profile"]["source"] == "FACEBOOK":
-                user_income.facebook = user_income.facebook + 1
-            elif serializer.data["student_profile"]["source"] == "TELEGRAM":
-                user_income.telegram = user_income.telegram + 1
-            elif serializer.data["student_profile"]["source"] == "LEAFLET":
-                user_income.leaflet = user_income.leaflet + 1
-            elif serializer.data["student_profile"]["source"] == "OTHER":
-                user_income.other = user_income.other + 1
-            elif serializer.data["student_profile"]["source"] == "FRIEND":
-                user_income.friend = user_income.friend + 1
-            user_income.save()
+            try:
 
-            mydata = serializer.data
-            mydata["id"] = student_profile.id
+                teacher_profile = TeacherProfile.objects.get(
+                    id=int(user.teacher_profile.id)
+                )
+            
+                student_profile.teacher = teacher_profile
+                student_profile.save()
+            except Exception as e:
+                print(e)
+                return Response({"message":"Techer not found and problem finding student"})
+            
+            try:
+                user_income = UserTraffic.objects.get(teacher=teacher_profile)
 
-            return Response(mydata, 201)
+                if serializer.data["student_profile"]["source"] == "INSTAGRAM":
+                    user_income.instagram = int(user_income.instagram) + 1
+                elif serializer.data["student_profile"]["source"] == "FACEBOOK":
+                    user_income.facebook = user_income.facebook + 1
+                elif serializer.data["student_profile"]["source"] == "TELEGRAM":
+                    user_income.telegram = user_income.telegram + 1
+                elif serializer.data["student_profile"]["source"] == "LEAFLET":
+                    user_income.leaflet = user_income.leaflet + 1
+                elif serializer.data["student_profile"]["source"] == "OTHER":
+                    user_income.other = user_income.other + 1
+                elif serializer.data["student_profile"]["source"] == "FRIEND":
+                    user_income.friend = user_income.friend + 1
+                user_income.save()
+
+                mydata = serializer.data
+                mydata["id"] = student_profile.id
+
+                return Response(mydata, 201)
+            except Exception as e:
+                print(e)
+                return Response({"message":"User Traffic not Found"})
 
 
 class StudentLoginView(APIView):
     def post(self, request):
-        phone_number = request.data["phone_number"]
-        password = request.data["password"]
+        try:
+            phone_number = request.data["phone_number"]
+            password = request.data["password"]
+        except:
+            return Response({"message":"not all user provided"},400)
+        
         student = User.objects.filter(phone_number=phone_number).first()
 
         if student is None:
@@ -190,29 +224,39 @@ class StudentProfileListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         user = authenticate(request)
         if user:
+            
+          
+
             phone_number = request.query_params.get("phone_number", None)
 
             first_name = request.query_params.get("first_name", None)
             last_name = request.query_params.get("last_name", None)
             group = request.query_params.get("group", None)
             deptor = request.query_params.get("deptor", None)
+            
+            try:
 
-            queryset = self.filter_queryset(self.get_queryset())
-            queryset = queryset.filter(student_profile__teacher=user.teacher_profile)
+                queryset = self.filter_queryset(self.get_queryset())
+                queryset = queryset.filter(student_profile__teacher=user.teacher_profile)
+            except Exception as e:
+                print(e)
+                return Response({"message":"Problem finding techer profile "},400)
 
             if phone_number != "" and phone_number is not None:
+                print("phone_number")
                 queryset = queryset.filter(phone_number__contains=phone_number)
-            elif first_name != "" and first_name is not None:
+            if first_name != "" and first_name is not None:
+                print("first_name")
                 queryset = queryset.filter(first_name__contains=first_name)
-            elif last_name != "" and last_name is not None:
+            if last_name != "" and last_name is not None:
                 queryset = queryset.filter(last_name__contains=last_name)
-            elif group != "" and group is not None:
+            if group != "" and group is not None:
                 queryset = queryset.filter(student_profile__group=group)
-            elif deptor == "True":
+            if deptor == "True":
                 print("it is true")
                 queryset = queryset.filter(student_profile__balance__lt=0)
                 print(queryset)
-            elif deptor == "False":
+            if deptor == "False":
                 print("that")
                 queryset = queryset.filter(student_profile__balance__gte=0)
                 print(queryset)
@@ -224,7 +268,7 @@ class StudentProfileListView(generics.ListAPIView):
                 serializer = self.get_serializer(page, many=True)
 
                 return self.get_paginated_response(serializer.data)
-
+        return Response({"message":"Not Authentcaated"},403)
 
 class StudentFilterView(APIView):
     def get(self, request):
@@ -259,8 +303,9 @@ class StudentFilterView(APIView):
                 print(qs)
 
             serializer = UserSerilizer(qs, many=True)
+            if serializer.is_valid(raise_exception=True):
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.data, status=status.HTTP_200_OK)
         return status.HTTP_401_UNAUTHORIZED
 
 
@@ -275,6 +320,8 @@ class GetMeView(APIView):
         elif user.role == "TEACHER":
             serializer = TeacherGetMeSerailizer(user)
             return Response(serializer.data, 200)
+        
+        return Response({"message":"User nott found"},404)
 
 
 class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
@@ -288,7 +335,10 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
 
         if user:
             if user.role == "TEACHER":
-                student = StudentProfile.objects.get(id=int(kwargs["pk"]))
+                try:
+                    student = StudentProfile.objects.get(id=int(kwargs["pk"]))
+                except:
+                    return Response({"message":"Not Found"},404)
 
                 if student.teacher.id == user.teacher_profile.id:
                     instance = self.get_object()
@@ -297,7 +347,10 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                     return Response(serializer.data)
 
             else:
-                student_profile = StudentProfile.objects.get(user__id=int(user.id))
+                try:
+                    student_profile = StudentProfile.objects.get(user__id=int(user.id))
+                except:
+                    return Response({"message":"Not Found"},404)
 
                 if int(student_profile.id) == int(kwargs["pk"]):
                     instance = self.get_object()
@@ -313,13 +366,21 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         user = authenticate(request=request)
         if user.role == "TEACHER":
-            student = StudentProfile.objects.get(id=int(kwargs["pk"]))
+            try:
+                student = StudentProfile.objects.get(id=int(kwargs["pk"]))
+            except:
+                return Response({"message":"Not Found"},404)
+
 
             if student.teacher.id == user.teacher_profile.id:
-                student_to_be_deleted = User.objects.get(id=int(student.user.id))
-                student_to_be_deleted.delete()
-                instance = self.get_object()
-                self.perform_destroy(instance)
+                try:
+                    student_to_be_deleted = User.objects.get(id=int(student.user.id))
+                    student_to_be_deleted.delete()
+                    instance = self.get_object()
+                    self.perform_destroy(instance)
+                except Exception as e:
+                    print(e)
+                    return Response({"message":"Not Found"},404)
 
                 return Response({"message": "Object deleted successfully."}, 201)
             return Response(
@@ -340,10 +401,17 @@ class UpdateStudentProfileView(APIView):
             parent_teleg_account = request.data["parent_teleg_account"]
             tutition_fee = request.data["tuition_fee"]
 
-            student = StudentProfile.objects.get(id=int(id))
+            try:
+
+                student = StudentProfile.objects.get(id=int(id))
+            except Exception as e:
+                return Response({"message":"Not Found"},404)
 
             if student.teacher.id == user.teacher_profile.id:
-                my_user = User.objects.get(student_profile=student)
+                try:
+                    my_user = User.objects.get(student_profile=student)
+                except:
+                    return Response({"message":"Not Found"},404)
                 print(my_user, "my_useeer")
                 print(
                     User.objects.exclude(student_profile=student).filter(
@@ -358,17 +426,20 @@ class UpdateStudentProfileView(APIView):
                     raise serializers.ValidationError(
                         {"phone_number": "This phone_number is already in use."}
                     )
+                try:
+                    my_user.phone_number = phone_number
+                    my_user.last_name = last_name
+                    my_user.first_name = first_name
+                    my_user.save()
 
-                my_user.phone_number = phone_number
-                my_user.last_name = last_name
-                my_user.first_name = first_name
-                my_user.save()
-
-                student.teleg_account = teleg_account
-                student.parent_phone = parent_phone
-                student.parent_teleg_account = parent_teleg_account
-                student.tuition_fee = tutition_fee
-                student.save()
+                    student.teleg_account = teleg_account
+                    student.parent_phone = parent_phone
+                    student.parent_teleg_account = parent_teleg_account
+                    student.tuition_fee = tutition_fee
+                    student.save()
+                except Exception as e:
+                    print(e)
+                    return Response({"message":"Not Saaved succesfully"},400)
 
                 return Response(request.data)
 
@@ -377,12 +448,20 @@ class AssignStudentToTeacherView(APIView):
     def put(self, request):
         user = authenticate(request)
         if user:
-            student_id = int(request.data["student_id"])
-            student = StudentProfile.objects.filter(id=student_id).first()
-            id = int(user.id)
 
-            teacher_id = TeacherProfile.objects.get(user__id=id)
-            teacher_obj = TeacherProfile.objects.filter(id=int(teacher_id.id)).first()
+            student_id = int(request.data["student_id"])
+            try:
+                student = StudentProfile.objects.filter(id=student_id).first()
+            except Exception as e:
+                print(e)
+                return Response({"message":"Not Found"},404)
+            id = int(user.id)
+            try:
+                teacher_id = TeacherProfile.objects.get(user__id=id)
+                teacher_obj = TeacherProfile.objects.filter(id=int(teacher_id.id)).first()
+            except Exception as e:
+                print(e)
+                return Response({"message":"Not found techer profile"})
             student.teacher = teacher_obj
             student.save()
             serialzer_student = StudentProfileSerialzer(student)
@@ -393,14 +472,23 @@ class AssignStudentToGroupView(APIView):
     def put(self, request, id):
         user = authenticate(request)
         if user.role == "TEACHER":
-            student_id = request.data["student_id"]
-            student = StudentProfile.objects.filter(
-                id=student_id, teacher=user.teacher_profile.id
-            ).first()
 
-            group_obj = Group.objects.filter(
-                id=id, teacher=user.teacher_profile.id
-            ).first()
+            student_id = request.data["student_id"]
+            try:
+                student = StudentProfile.objects.filter(
+                    id=student_id, teacher=user.teacher_profile.id
+                ).first()
+            except Exception as e:
+                print(e)
+                return Response({"message":"Not Found Student Profile"},404)
+            
+            try:
+                group_obj = Group.objects.filter(
+                    id=id, teacher=user.teacher_profile.id
+                ).first()
+            except Exception as e:
+                print(e)
+                return Response({"message":"Not Found group"},404)
             student.group = group_obj
             student.save()
             serialzer_student = StudentProfileSerialzer(student)
@@ -412,31 +500,44 @@ class AttendenceView(APIView):
         user = authenticate(request)
         if user:
             attendence = request.data["attendence"]
+            try:
 
-            serializer = AttendenceSerializer(data=attendence, many=True)
+                serializer = AttendenceSerializer(data=attendence, many=True)
 
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            except Exception as e:
+                print(e)
+                return Response({"message":"Error in Attendence"})
 
             for x in attendence:
-                student = StudentProfile.objects.filter(id=int(x["student"])).first()
+                try:
+                    student = StudentProfile.objects.filter(id=int(x["student"])).first()
 
-                user = User.objects.get(student_profile=student)
-                student.balance = float(student.balance) - float(student.tuition_fee)
+                    user = User.objects.get(student_profile=student)
+                    student.balance = float(student.balance) - float(student.tuition_fee)
+                except Exception as e:
+                    print(e)
+                    return Response({"message":"not found student"},404)
                 student.save()
-
-                send_to_telegram(
-                    chat_id=student.parent_telegram_id,
-                    first_name=user.first_name,
-                    last_name=user.last_name,
-                    status=x["status"],
-                )
+                try:
+                    send_to_telegram(
+                        chat_id=student.parent_telegram_id,
+                        first_name=user.first_name,
+                        last_name=user.last_name,
+                        status=x["status"],
+                    )
+                except Exception as e:
+                    print(e)
+                    logging.error("not sent telegram data")
+                
 
             return Response(serializer.data, 201)
 
 
 class TeacherRegisterView(APIView):
     def post(self, request):
+
         serializer = TeacherRegisterSerializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
@@ -479,7 +580,10 @@ class TeacherGetMeView(APIView):
 
         if user.role == "TEACHER":
             print(user.id)
-            teacher_profile = TeacherProfile.objects.get(id=user.teacher_profile.id)
+            try:
+                teacher_profile = TeacherProfile.objects.get(id=user.teacher_profile.id)
+            except:
+                pass
             serialized_teacher = TeacherProfileSerializer(teacher_profile)
             my_data = serialized_teacher.data
             my_data["first_name"] = user.first_name
@@ -550,7 +654,9 @@ class GroupRUDView(APIView):
 
                 data_ser["date"] = data_ser["date"].split(",")
                 return Response(data_ser, 200)
-            except:
+            except Exception as e:
+
+                print(e)
                 return Response(
                     {"message": "dont try to connects other's profile"}, 401
                 )

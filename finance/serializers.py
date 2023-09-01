@@ -25,7 +25,7 @@ class PaymentSerializerForFinance(serializers.ModelSerializer):
     
     class Meta:
         model = Payment
-        fields = ["id", "student", "teacher", "sum", "comment", "payment_type"]
+        fields = ["id", "student", "teacher", "sum", "comment", "payment_type","created_at"]
 
 class PaymentSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
@@ -33,7 +33,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Payment
-        fields = ["id", "student", "teacher", "sum", "comment", "payment_type"]
+        fields = ["id", "student", "teacher", "sum", "comment", "payment_type","created_at"]
 
 class ExpenseSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)

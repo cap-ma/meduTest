@@ -155,7 +155,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         student_profile_data = validated_data.pop("student_profile")
-
+        
         student_profile = StudentProfile.objects.create(
             teleg_account=student_profile_data["teleg_account"],
             parent_phone=student_profile_data["parent_phone"],
