@@ -297,9 +297,13 @@ class OrderTestInfoCreateView(APIView):
 
             first_id = tests.first()
             last_id = tests.last()
-            random_nums_list = random.sample(
-                range(int(first_id.id), int(last_id.id)), count
-            )
+            try:
+                random_nums_list = random.sample(
+                    range(int(first_id.id), int(last_id.id)), count
+                )
+            except:
+                return Response({"message":"You dont have enought tests in these categories"},404)
+            
             order_test_pack_list = list()
             for x in random_nums_list:
                 order_test_pack = OrderTestPack.objects.create(
