@@ -2,6 +2,9 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers
+from django.db import connection
+
+
 
 from .paginations import CustomPagination
 from django.shortcuts import get_object_or_404
@@ -35,8 +38,24 @@ from django.views.decorators.csrf import csrf_exempt
 import jwt
 import logging
 
+from django.db import reset_queries
+
+def database_debug(func):
+    def inner_func(*args, **kwargs):
+        reset_queries()
+        results = func(*args, **kwargs)
+        query_info = connection.queries
+        print('function_name: {}'.format(func.__name__))
+        print('query_count: {}'.format(len(query_info)))
+        queries = ['{}\n\n'.format(query['sql']) for query in query_info]
+        print('queries: \n{}\n'.format(''.join(queries)))
+
+        return results
+    return inner_func
+
 
 @csrf_exempt
+
 def authenticate(request):
     # token=request.COOKIES.get('jwt')
 
@@ -103,18 +122,27 @@ class UserRegisterView(APIView):
         return Response(serializer.data, 201)
 
 
+
 class StudentRegisterView(APIView):
+    @database_debug
     def post(self, request):
         user = authenticate(request)
-
+        # print(len(connection.queries),"authenticate")    
+        print(len(connection.queries),"end of fields")
         if user:
             try:
+                print(user.teacher_profile)
+                print(len(connection.queries),"in try")
+
                 config_data = Config.objects.get(teacher=user.teacher_profile)
+                # config_data = Config.objects.select_related('teacher').get(teacher=user.teacher_profile)
+                print(len(connection.queries),"87134682736rhdwieufih")
             except Exception as e:
                 logging.error(e)
                 return Response({"message":"You should first create tutition fee for your course then you can create student "},400)
-
+            print(len(connection.queries),"config data")
             request.data["student_profile"]["tuition_fee"] = config_data.tuition_fee
+            print(len(connection.queries),"config daata ")
             try:
                 print(request.data["phone_number"])
                 registered_student=User.objects.filter(phone_number=request.data["phone_number"],role="STUDENT").first()
@@ -129,11 +157,8 @@ class StudentRegisterView(APIView):
             except Exception as e:
                 print(e)
                 return Response({"message":"fill all fields"},400)
-            
-            try:
-                serializer_id = serializer.data["id"]
-            except:
-                return Response({"message":"Id not provided"})
+                       
+            serializer_id = serializer.data["id"]
 
             student_ = get_object_or_404(User, id=int(serializer_id))
             
@@ -144,9 +169,6 @@ class StudentRegisterView(APIView):
                 )
             except:
                 return Response({"message":"Not Found StudentProfile"})
-            
-        
-
             try:
 
                 teacher_profile = TeacherProfile.objects.get(
@@ -179,6 +201,7 @@ class StudentRegisterView(APIView):
                 mydata = serializer.data
                 mydata["id"] = student_profile.id
 
+                print(len(connection.queries),"87134682736rhdwieufih")
                 return Response(mydata, 201)
             except Exception as e:
                 print(e)

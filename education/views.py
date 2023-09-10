@@ -259,12 +259,16 @@ class OrderTestInfoCreateView(APIView):
             deadline = request.data["deadline"]
             categories = request.data["categories"]
             int_categories = [int(x) for x in categories]
-
+            
             tests = Test.objects.filter(
                 category__in=int_categories,
                 level=level,
                 teacher=user.teacher_profile,
             ).order_by("id")
+
+            if not tests:
+               
+                return Response({"message":"You dont have enough tests in choosen categories or in the chosen level"},404)
             print(tests, "adfadgadf")
 
             order_test_info = OrderTestInfo.objects.create(

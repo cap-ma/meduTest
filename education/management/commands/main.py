@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from django.conf import settings
 from asgiref.sync import sync_to_async
-
+import asyncio 
 """
 This is a echo bot.
 It echoes any incoming text messages.
@@ -11,7 +11,7 @@ It echoes any incoming text messages.
 
 import logging
 
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, types
 from education.models import Test
 from user.models import User, StudentProfile, TeacherProfile
 
@@ -75,4 +75,4 @@ class Command(BaseCommand):
     help = "Closes the specified poll for voting"
 
     def handle(self, *args, **options):
-        executor.start_polling(dp, skip_updates=True)
+        dp.start_polling(dp, skip_updates=True)

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
     "user",
     "education",
     "corsheaders",
@@ -44,6 +45,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+
+    'querycount.middleware.QueryCountMiddleware',
+    
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -146,4 +150,5 @@ CORS_ALLOWED_ORIGINS = ["https://capma.pythonanywhere.com", "http://127.0.0.1:80
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-BOT_TOKEN = "6429460227:AAGcCdnWUFQuQAsZvAgyMaM264KcMA7qSxk"
+BOT_TOKEN = "6519620949:AAHjio8aPZaeLiZ4wKW295teOmWybGnKl5Y"
+

@@ -34,3 +34,4 @@ class Expense(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
+    
