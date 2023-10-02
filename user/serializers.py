@@ -9,6 +9,7 @@ from .models import (
     WithdrowalBalance,
     
     UserTraffic,
+    Sms,
 )
 
 from finance.models import Payment,Expense
@@ -204,7 +205,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class AttendenceSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+    # id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Attendance
@@ -225,3 +226,7 @@ class StudentIncomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserTraffic
         fields = "__all__"
+class SmsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Sms
+        fields="__all__"

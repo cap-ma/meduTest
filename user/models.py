@@ -165,3 +165,9 @@ class UserTraffic(models.Model):
 class Config(models.Model):
     tuition_fee = models.FloatField(default=0)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
+
+class Sms(models.Model):
+    title=models.CharField(max_length=50)
+    content=models.TextField()
+    teacher=models.ForeignKey(TeacherProfile,on_delete=models.SET_NULL,null=True)
+

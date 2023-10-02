@@ -4,8 +4,7 @@ from rest_framework.response import Response
 from rest_framework import serializers
 from django.db import connection
 
-
-
+from .sms_service import SendSms
 from .paginations import CustomPagination
 from django.shortcuts import get_object_or_404
 from finance.serializers import ExpenseSerializer,PaymentSerializer
@@ -18,6 +17,7 @@ from .serializers import (
     GroupSerializer,
     StudentProfileSerialzer,
     AttendenceSerializer,
+
     
     WithdrowalBalanceSerializer,
     
@@ -25,10 +25,11 @@ from .serializers import (
     StudentFilterListViewSerializer,
     StudentIncomeSerializer,
     StudentGetMeSerializer,
+    SmsSerializer,
 )
 from .utils import send_to_telegram
 from rest_framework import status
-from .models import User, Group, StudentProfile, TeacherProfile, UserTraffic, Config
+from .models import User, Group, StudentProfile, TeacherProfile, UserTraffic, Config,Sms,Attendance
 import datetime
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import generics
@@ -240,7 +241,7 @@ class StudentLoginView(APIView):
 
 
 class StudentProfileListView(generics.ListAPIView):
-    queryset = User.objects.all()
+
     serializer_class = StudentFilterListViewSerializer
     pagination_class = CustomPagination
 
@@ -259,8 +260,8 @@ class StudentProfileListView(generics.ListAPIView):
             
             try:
 
-                queryset = self.filter_queryset(self.get_queryset())
-                queryset = queryset.filter(student_profile__teacher=user.teacher_profile)
+               
+                queryset = User.objects.filter(student_profile__teacher=user.teacher_profile)
             except Exception as e:
                 print(e)
                 return Response({"message":"Problem finding techer profile "},400)
@@ -516,6 +517,29 @@ class AssignStudentToGroupView(APIView):
             student.save()
             serialzer_student = StudentProfileSerialzer(student)
             return Response(serialzer_student.data, 200)
+import datetime
+
+class GetAttendenceView(APIView):
+    def get(self , request,from_time,to_time):
+        user=authenticate(request=request)
+        if user.teacher_profile:
+
+
+            if from_time is None and to_time is None:
+
+                attendence=Attendance.objects.filter(date__lt=datetime.date.now(),date__gt=datetime.date.now().replace(day=1))
+                serializer=AttendenceSerializer(attendence,many=True)
+                return Response(serializer.data,200)
+               
+            else:
+                attendence=Attendance.objects.filter(date__gt=datetime.date.fromtimestamp(float(from_time)) ,date__lt=datetime.date.fromtimestamp(float(to_time)))
+                serializer=AttendenceSerializer(attendence,many=True)
+                return Response(serializer.data,200)
+
+
+
+
+
 
 
 class AttendenceView(APIView):
@@ -523,15 +547,36 @@ class AttendenceView(APIView):
         user = authenticate(request)
         if user:
             attendence = request.data["attendence"]
-            try:
+            group = request.data.get("group",None)
+            date = request.data.get("date",None)
+            list_datas=[]
+            for x in attendence:
+                data={
+                    "student":x["student"],
+                    "teacher":user.teacher_profile.id,
+                    "group":group,
+                    'date':date,
+                    'status':x['status']
+                }
+                list_datas.append(data)
+                if x['status']=="sababsiz" :
 
-                serializer = AttendenceSerializer(data=attendence, many=True)
+                    sms=SendSms(message="sababsiz",phone=903192539)
+                    sms.send()
+                elif x['status']=='kelmadi':
+                    sms=SendSms(message="kemadi prosta",phone=903192539)
+                    sms.send()
+
+            try:
+                
+
+                serializer = AttendenceSerializer(data=list_datas, many=True)
 
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
             except Exception as e:
                 print(e)
-                return Response({"message":"Error in Attendence"})
+                return Response({"message":"Error in Attendence"},400)
 
             for x in attendence:
                 try:
@@ -789,10 +834,14 @@ class PaymentView(APIView):
             )
             student.balance = float(student.balance) + float(request.data["sum"])
             student.save()
+            student=User.objects.get(student_profile=student)
             request.data["teacher"] = user.teacher_profile.id
             serializer = PaymentSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            e_api=SendSms(message=f"{student.first_name} {student.last_name} {request.data['sum']} toladi",phone=995887756)
+            e_api.send()
+
             return Response(serializer.data, 201)
 
 
@@ -813,3 +862,57 @@ class UserTrafficView(APIView):
             income_sources = UserTraffic.objects.get(teacher=user.teacher_profile)
             serializer = StudentIncomeSerializer(income_sources)
             return Response(serializer.data, 201)
+
+class CreateSmsView(APIView):
+    def post(self,request):
+        user=authenticate(request=request)
+
+        if user.role=="TEACHER":
+            request.data["teacher"]=user
+            serializer=SmsSerializer(data=request.data)
+            if serializers.is_valid(raise_exeption=True):
+                serializer.save()
+                return Response(serializer.data,200)
+            return Response({"message":"invalid input "},400)
+
+
+class GetSmsView(APIView):
+      def get(self,request):
+        user=authenticate(request=request)
+        if user.role=="TEACHER":
+            try:
+                smss=Sms.objects.filter(teacher=user.id)
+            except Exception as e:
+                print(e)
+                return Response({"message":"not found"},400)
+            serializer=SmsSerializer(smss,many=True)
+            return Response(serializer.data,201)
+
+class SendSmsView(APIView):
+    def post(self,request):
+        user=authenticate(request=request)
+        if user:
+            my_list=[]
+            phone_number=request.data.get("phone_number",None)
+            my_list.append(phone_number)
+            parent_phone=request.data.get('parent_phone',None)
+            my_list.append(parent_phone)
+            content=request.data.get('content',None)
+
+            for x in my_list:
+                if x:
+                    message="Pulatov kurinmisan"
+                    phone=995887756
+                    e_api=SendSms(message=content,phone=phone)
+                    r=e_api.send()
+            
+
+
+
+           
+
+
+         
+           
+
+
