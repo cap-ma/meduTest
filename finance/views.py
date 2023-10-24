@@ -57,26 +57,29 @@ class TotalPaymentView(APIView):
 class PaymentListFilterView(APIView):
     def get(self,request):
         user=authenticate(request)
+        print(user)
         if user.role=="TEACHER":
             phone_number=request.query_params.get("phone")
             full_name=request.query_params.get("full_name")
             from_date_timestamp=request.query_params.get("from")        
             to_date_timestamp=request.query_params.get("to")
-            
+
             if from_date_timestamp:
                 from_date=date.fromtimestamp(float(from_date_timestamp))
             if to_date_timestamp:
                 to_date=date.fromtimestamp(float(to_date_timestamp))
 
             qs=Payment.objects.filter(teacher=user.teacher_profile)
-           
+            print(qs)
+
             if phone_number is not None and phone_number!="":
                 qs=qs.filter(student__user__phone_number__contains=phone_number)
              
             if (full_name is not None and full_name!=""):
+                full_name_true=True
                 qs=qs.filter(student__user__first_name__contains=full_name)
-            if (full_name is not None and full_name !=""):
-                qs=qs.filter(student__user__last_name__contains=full_name)
+            if (full_name is not None and full_name !="" and full_name_true):
+                qs=qs.filter(student__user__last_name__contains=full_name)  
             if from_date_timestamp is not None and from_date_timestamp!="":
                 qs=qs.filter(created_at__gt=from_date)
             if to_date_timestamp is not None and to_date_timestamp!="":

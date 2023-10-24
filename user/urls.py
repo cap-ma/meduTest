@@ -38,6 +38,7 @@ urlpatterns = [
     path("student/assign_to_teacher", AssignStudentToTeacherView.as_view()),
     path("student/assign_to_group/<int:id>", AssignStudentToGroupView.as_view()),
     path("teacher/attendence", AttendenceView.as_view()),
+    path("teacher/attendence/<int:id>", AttendenceView.as_view()),
     path("teacher/payment", PaymentView.as_view()),
     path("teacher/expense", ExpenseView.as_view()),
     path("teacher/user_traffic", UserTrafficView.as_view()),

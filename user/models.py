@@ -99,7 +99,7 @@ class StudentProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     parent_telegram_id = models.CharField(max_length=15, default="")
-    verification_for_bot = models.BooleanField(default=False)
+    verification_for_bot = models.BooleanField(default=False)#if user verified for sending notifications in bot 
 
     def __str__(self):
         return str(self.user)
@@ -131,6 +131,8 @@ class User(AbstractUser):
 
     objects = CustomUserManager()
 
+    
+
 
 class Attendance(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING)
@@ -152,7 +154,7 @@ class WithdrowalBalance(models.Model):
 
 
 
-class UserTraffic(models.Model):
+class UserTraffic(models.Model):#with what means of advertisements clients come to know the education center
     instagram = models.IntegerField(default=0)
     facebook = models.IntegerField(default=0)
     telegram = models.IntegerField(default=0)

@@ -150,5 +150,5 @@ CORS_ALLOWED_ORIGINS = ["https://capma.pythonanywhere.com", "http://127.0.0.1:80
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-BOT_TOKEN = "6519620949:AAHjio8aPZaeLiZ4wKW295teOmWybGnKl5Y"
+BOT_TOKEN = "..."
 

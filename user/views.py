@@ -18,7 +18,6 @@ from .serializers import (
     StudentProfileSerialzer,
     AttendenceSerializer,
 
-    
     WithdrowalBalanceSerializer,
     
     TeacherProfileSerializer,
@@ -53,7 +52,6 @@ def database_debug(func):
 
         return results
     return inner_func
-
 
 @csrf_exempt
 
@@ -122,22 +120,20 @@ class UserRegisterView(APIView):
             return Response({"message":"Error happened while creating user"})
         return Response(serializer.data, 201)
 
-
-
 class StudentRegisterView(APIView):
     @database_debug
     def post(self, request):
         user = authenticate(request)
         # print(len(connection.queries),"authenticate")    
-        print(len(connection.queries),"end of fields")
+      
         if user:
             try:
                 print(user.teacher_profile)
-                print(len(connection.queries),"in try")
+                
 
                 config_data = Config.objects.get(teacher=user.teacher_profile)
                 # config_data = Config.objects.select_related('teacher').get(teacher=user.teacher_profile)
-                print(len(connection.queries),"87134682736rhdwieufih")
+             
             except Exception as e:
                 logging.error(e)
                 return Response({"message":"You should first create tutition fee for your course then you can create student "},400)
@@ -202,12 +198,10 @@ class StudentRegisterView(APIView):
                 mydata = serializer.data
                 mydata["id"] = student_profile.id
 
-                print(len(connection.queries),"87134682736rhdwieufih")
                 return Response(mydata, 201)
             except Exception as e:
                 print(e)
                 return Response({"message":"User Traffic not Found"})
-
 
 class StudentLoginView(APIView):
     def post(self, request):
@@ -239,7 +233,6 @@ class StudentLoginView(APIView):
 
         return response
 
-
 class StudentProfileListView(generics.ListAPIView):
 
     serializer_class = StudentFilterListViewSerializer
@@ -248,8 +241,6 @@ class StudentProfileListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         user = authenticate(request)
         if user:
-            
-          
 
             phone_number = request.query_params.get("phone_number", None)
 
@@ -267,21 +258,21 @@ class StudentProfileListView(generics.ListAPIView):
                 return Response({"message":"Problem finding techer profile "},400)
 
             if phone_number != "" and phone_number is not None:
-                print("phone_number")
+              
                 queryset = queryset.filter(phone_number__contains=phone_number)
             if first_name != "" and first_name is not None:
-                print("first_name")
+            
                 queryset = queryset.filter(first_name__contains=first_name)
             if last_name != "" and last_name is not None:
                 queryset = queryset.filter(last_name__contains=last_name)
             if group != "" and group is not None:
                 queryset = queryset.filter(student_profile__group=group)
             if deptor == "True":
-                print("it is true")
+              
                 queryset = queryset.filter(student_profile__balance__lt=0)
-                print(queryset)
+        
             if deptor == "False":
-                print("that")
+            
                 queryset = queryset.filter(student_profile__balance__gte=0)
                 print(queryset)
 
@@ -307,7 +298,7 @@ class StudentFilterView(APIView):
             last_name = request.query_params.get("last_name", None)
             group = request.query_params.get("group", None)
             deptor = request.query_params.get("deptor", None)
-            print(deptor)
+           
 
             if phone_number != "" and phone_number is not None:
                 qs = qs.filter(phone_number__contains=phone_number)
@@ -318,13 +309,13 @@ class StudentFilterView(APIView):
             elif group != "" and group is not None:
                 qs = qs.filter(student_profile__group=group)
             elif deptor == True:
-                print("this")
+               
                 qs = qs.filter(student_profile__balance__lt=0)
-                print(qs)
+             
             elif deptor == False:
-                print("that")
+            
                 qs = qs.filter(student_profile__balance__gte=0)
-                print(qs)
+            
 
             serializer = UserSerilizer(qs, many=True)
             if serializer.is_valid(raise_exception=True):
@@ -412,7 +403,6 @@ class StudentProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-
 class UpdateStudentProfileView(APIView):
     def put(self, request, id):
         user = authenticate(request)
@@ -436,7 +426,7 @@ class UpdateStudentProfileView(APIView):
                     my_user = User.objects.get(student_profile=student)
                 except:
                     return Response({"message":"Not Found"},404)
-                print(my_user, "my_useeer")
+              
                 print(
                     User.objects.exclude(student_profile=student).filter(
                         phone_number=phone_number
@@ -491,7 +481,6 @@ class AssignStudentToTeacherView(APIView):
             serialzer_student = StudentProfileSerialzer(student)
             return Response(serialzer_student.data, 200)
 
-
 class AssignStudentToGroupView(APIView):
     def put(self, request, id):
         user = authenticate(request)
@@ -523,26 +512,41 @@ class GetAttendenceView(APIView):
     def get(self , request,from_time,to_time):
         user=authenticate(request=request)
         if user.teacher_profile:
-
-
             if from_time is None and to_time is None:
-
                 attendence=Attendance.objects.filter(date__lt=datetime.date.now(),date__gt=datetime.date.now().replace(day=1))
                 serializer=AttendenceSerializer(attendence,many=True)
                 return Response(serializer.data,200)
-               
             else:
                 attendence=Attendance.objects.filter(date__gt=datetime.date.fromtimestamp(float(from_time)) ,date__lt=datetime.date.fromtimestamp(float(to_time)))
                 serializer=AttendenceSerializer(attendence,many=True)
                 return Response(serializer.data,200)
-
-
-
-
-
-
-
+            
 class AttendenceView(APIView):
+    def get(self,request,id):
+
+        date=request.GET.get("date")
+        dt_object = datetime.datetime.fromtimestamp(int(date)).date()
+        attendence=Attendance.objects.filter(date__lt=dt_object)
+        attendence.values('date')
+        attendence.values('status')
+        
+        serializer=AttendenceSerializer(attendence,many=True)
+
+
+
+        
+
+        # Format the datetime object as a string
+        # date_string = datetime.date(dt_object)
+
+        print(dt_object)
+
+        try:
+            group=Group.objects.get(id=id)
+        except:
+            pass
+        return Response(serializer.data)
+
     def post(self, request):
         user = authenticate(request)
         if user:
@@ -588,16 +592,16 @@ class AttendenceView(APIView):
                     print(e)
                     return Response({"message":"not found student"},404)
                 student.save()
-                try:
-                    send_to_telegram(
-                        chat_id=student.parent_telegram_id,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                        status=x["status"],
-                    )
-                except Exception as e:
-                    print(e)
-                    logging.error("not sent telegram data")
+                # try:
+                #     send_to_telegram(
+                #         chat_id=student.parent_telegram_id,
+                #         first_name=user.first_name,
+                #         last_name=user.last_name,
+                #         status=x["status"],
+                #     )
+                # except Exception as e:
+                #     print(e)
+                #     logging.error("not sent telegram data")
                 
 
             return Response(serializer.data, 201)
@@ -716,7 +720,7 @@ class GroupRUDView(APIView):
                 serializer = GroupSerializer(group)
                 data_ser = serializer.data
                 data_ser["student_number"] = group_count
-                print(data_ser["date"])
+               
 
                 data_ser["days"] = data_ser["days"].split(",")
 

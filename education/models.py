@@ -23,7 +23,7 @@ class Test(models.Model):
 
 
 class OrderTestInfo(models.Model):
-    class Status(models.TextChoices):
+    class Status(models.TextChoices):#if order test info resolves by student it is green and white not resloved yet ,yellow not resolved and deadline passed 
         white="WHITE","white"
         green="GREEN","green"
         yellow="YELLOW",'yellow'
@@ -37,14 +37,14 @@ class OrderTestInfo(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
 
 
-class OrderTestPack(models.Model):
+class OrderTestPack(models.Model):#bunch of tests 
     test = models.ForeignKey(Test, on_delete=models.CASCADE,null=True)
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.SET_NULL,null=True)
     created_at = models.DateField(auto_now_add=True)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.DO_NOTHING, null=True)
 
 
-class OrderTestInfoAssignStudent(models.Model):
+class OrderTestInfoAssignStudent(models.Model):#here maybe using m2m eases situation with student table, the model is for assigning students into TestInfo
     student = models.ForeignKey(StudentProfile, on_delete=models.SET_NULL,null=True)
     order_test_info = models.ForeignKey(OrderTestInfo, on_delete=models.SET_NULL,null=True)
     submitted = models.BooleanField(default=False)
@@ -52,7 +52,7 @@ class OrderTestInfoAssignStudent(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
 
 
-class OrderTestPackResultsOfStudent(models.Model):
+class OrderTestPackResultsOfStudent(models.Model):#Test results of students
     result = models.CharField(max_length=200)
     student = models.ForeignKey(
         OrderTestInfoAssignStudent, on_delete=models.SET_NULL, null=True
